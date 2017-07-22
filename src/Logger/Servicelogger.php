@@ -18,9 +18,7 @@ use Monolog\Logger;
 use Phalcon\Di\InjectionAwareInterface;
 
 /**
- *
  * @author hehui<hehui@eelly.net>
- *
  */
 class Servicelogger extends Logger implements InjectionAwareInterface
 {
