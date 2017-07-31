@@ -40,6 +40,7 @@ class Database extends Adapter
         'role'              => 'oauth_role',
         'roleClient'        => 'oauth_role_client',
         'rolePermission'    => 'oauth_role_permission',
+        'permissionParameter'    => 'oauth_permission_parameter',
     ];
 
     /**
@@ -210,28 +211,33 @@ class Database extends Adapter
     /**
      * 添加接口.
      *
-     * @param string $permName
      * @param string $hashName
      * @param string $serviceName
+     * @param array $data
      *
-     * @return bool|bool|number
+     * @return bool
      */
-    public function addPermission(string $permName, string $hashName, string $serviceName)
+    public function addPermission(string $hashName, string $serviceName, array $data)
     {
-        if (empty($hashName) || empty($serviceName) || empty($serviceId = $this->getServiceId($serviceName))) {
+        if (empty($data) || empty($serviceName) || empty($serviceId = $this->getServiceId($serviceName))) {
             return false;
         }
 
-        if (!$this->checkExists($this->tables['permission'], ['hash_name' => $hashName])) {
-            return $this->commonInsert($this->tables['permission'], [
-                'service_id'   => $serviceId,
-                'hash_name'    => $hashName,
-                'perm_name'    => $permName,
-                'created_time' => time(),
-            ]);
+        if ($this->checkExists($this->tables['permission'], ['hash_name' => $hashName])) {
+            $permId = $this->getPermId($hashName);
+            $this->commonDelete($this->tables['permissionParameter'], ['permission_id' => $permId]);
+            $this->commonDelete($this->tables['permissionReturn'], ['permission_id' => $permId]);
+            $this->commonDelete($this->tables['permission'], ['hash_name' => $hashName]);
         }
 
-        return true;
+        return $this->commonInsert($this->tables['permission'], [
+            'service_id'   => $serviceId,
+            'hash_name'    => $hashName,
+            'perm_name'    => $data['methodName'],
+            'request_example' => $data['requestExample'],
+            'remark' => $data['methodDescribe'],
+            'created_time' => $data['created_time'],
+        ]);
     }
 
     /**
@@ -248,15 +254,15 @@ class Database extends Adapter
             return false;
         }
 
-        if ($this->checkExists($this->tables['permissionRequest'], ['permission_id' => $permId])) {
-            $this->commonDelete($this->tables['permissionRequest'], ['permission_id' => $permId]);
+        if ($this->checkExists($this->tables['permissionParameter'], ['permission_id' => $permId])) {
+            $this->commonDelete($this->tables['permissionParameter'], ['permission_id' => $permId]);
         }
 
         foreach ($data as &$val) {
             $val['permission_id'] = $permId;
         }
 
-        return $this->commonBatchInsert($this->tables['permissionRequest'], $data);
+        return $this->commonBatchInsert($this->tables['permissionParameter'], $data);
     }
 
     /**
@@ -274,16 +280,15 @@ class Database extends Adapter
             return false;
         }
 
-        $dtoName = $data['dto_name'];
-        $example = $data['return_example'];
-        if (!$this->checkExists($this->tables['permissionReturn'], ['permission_id' => $permId])) {
-            return $this->commonInsert($this->tables['permissionReturn'], [
-                'permission_id'  => $permId,
-                'dto_name'       => $dtoName,
-                'return_example' => $example,
-                'created_time'   => time(),
-            ]);
+        if ($this->checkExists($this->tables['permissionReturn'], ['permission_id' => $permId])) {
+            $this->commonDelete($this->tables['permissionReturn'], ['permission_id' => $permId]);
         }
+
+        foreach ($data as &$val) {
+            $val['permission_id'] = $permId;
+        }
+
+        return $this->commonBatchInsert($this->tables['permissionReturn'], $data);
     }
 
     public function addRoleClient(string $roleName, string $clientKey)
