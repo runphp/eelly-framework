@@ -53,6 +53,7 @@ class ModuleDocumentShow extends AbstractDocumentShow implements DocumentShowInt
         foreach ($finder as $item) {
             $serviceName = substr($item->getFilename(), 0, -9);
             $interfaceName = 'Eelly\\SDK\\'.$namespaceName.'\\Service\\'.$serviceName.'Interface';
+
             try {
                 $reflectionClass = new ReflectionClass($interfaceName);
             } catch (\ReflectionException $e) {

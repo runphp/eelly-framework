@@ -83,8 +83,10 @@ class ServiceDispatcher extends Dispatcher
          */
         $request = $this->getDI()->getShared('request');
         $documentShow = null;
+
         try {
             $reflectClass = new \ReflectionClass($class);
+
             try {
                 $classMethod = $reflectClass->getMethod($method);
             } catch (\ReflectionException $e) {
@@ -134,6 +136,7 @@ class ServiceDispatcher extends Dispatcher
     {
         $response = $this->getDI()->getShared('response');
         $response->setStatusCode(400);
+
         throw new InvalidArgumentException($message);
     }
 

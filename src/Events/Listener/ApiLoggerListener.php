@@ -37,7 +37,8 @@ class ApiLoggerListener extends AbstractListener
     private $traceId;
 
     /**
-     * 输入信息.
+     * 输�
+     * �信息.
      *
      * @var array
      */

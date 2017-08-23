@@ -16,7 +16,9 @@ namespace Eelly\Queue;
 /**
  * Queue factory interface.
  *
- * TODO 生产者接口和消费者接口
+ * TODO 生产�
+ * 接口和消费�
+ * 接口
  *
  * @author hehui<hehui@eelly.net>
  */
