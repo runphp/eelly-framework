@@ -44,8 +44,9 @@ trait ResultHydratorTrait
      *     'CCC' => '3',
      * ]
      *
-     * @param array  $data          需转换的数据
-     * @param array  $columnMap     字段映射关系
+     * @param array $data 需转换的数据
+     * @param array  $columnMap     字段映射�
+     * �系
      * @param string $hydrationMode 转换数据模式 array或类名
      *
      * @return array

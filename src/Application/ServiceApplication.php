@@ -55,6 +55,7 @@ class ServiceApplication extends Injectable
     {
         $this->application->useImplicitView(false);
         $this->application->registerModules($this->config->modules->toArray());
+
         try {
             $response = $this->application->handle($uri);
         } catch (LogicException $e) {

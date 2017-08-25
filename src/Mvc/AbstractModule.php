@@ -122,7 +122,8 @@ abstract class AbstractModule extends Injectable implements ModuleDefinitionInte
     abstract public function attachUserEvents(Di $di): void;
 
     /**
-     * 注入模块支持的命令.
+     * 注�
+     * �模块支持的命令.
      *
      * @param \Eelly\Console\Application $app
      */

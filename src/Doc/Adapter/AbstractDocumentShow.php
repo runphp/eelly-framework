@@ -58,7 +58,8 @@ HTML;
     }
 
     /**
-     * 获取文件内容.
+     * 获取文件�
+     * 容.
      *
      * @param string $filename         文件名
      * @param int    $startLineNumber  起始行
@@ -69,7 +70,7 @@ HTML;
     protected function getFileContent(string $filename, int $startLineNumber, int $lineNumber)
     {
         if (!is_file($filename)) {
-            return null;
+            return;
         }
         $content = '';
         $lineCnt = 0;

@@ -53,6 +53,7 @@ class ApiDoc extends Controller
                     break;
                 }
             }
+
             throw new RequestException(404, null, $this->request, $this->response);
         }
         $this->response->setContentType('text/html', 'utf-8');
