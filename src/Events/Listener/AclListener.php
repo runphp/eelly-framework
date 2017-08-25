@@ -36,6 +36,7 @@ class AclListener extends AbstractListener
         $token = trim(preg_replace('/^(?:\s+)?Bearer\s/', '', $header));
         $provider = $this->eellyClient->getProvider();
         $psr7Request = $provider->getAuthenticatedRequest(EellyProvider::METHOD_POST, $provider->getBaseAuthorizationUrl(), $token);
+
         try {
             $parsedResponse = $provider->getParsedResponse($psr7Request);
             $oauth = ApplicationConst::$oauth = $parsedResponse['data'];

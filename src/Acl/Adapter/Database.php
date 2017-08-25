@@ -670,7 +670,8 @@ WHERE client_id = :client_id");
     }
 
     /**
-     * 通用的插入.
+     * 通用的插�
+     * �.
      *
      * @param string $tableName
      * @param array  $data
@@ -691,7 +692,8 @@ WHERE client_id = :client_id");
     }
 
     /**
-     * 通用的批量插入.
+     * 通用的批量插�
+     * �.
      *
      * @param string $tableName
      * @param array  $data

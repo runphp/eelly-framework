@@ -26,7 +26,8 @@ final class ApplicationConst
     public const ENV_PRODUCTION = 'prod';
 
     /**
-     * local 待上线
+     * local �
+     * 上线
      *
      * @var string
      */

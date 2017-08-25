@@ -150,6 +150,7 @@ class ServiceDispatcher extends Dispatcher
     {
         $response = $this->getDI()->getShared('response');
         $response->setStatusCode(400);
+
         throw new InvalidArgumentException($message);
     }
 

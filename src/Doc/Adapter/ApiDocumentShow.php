@@ -56,7 +56,7 @@ class ApiDocumentShow extends AbstractDocumentShow implements DocumentShowInterf
         }
 
         $params = [];
-        $paramsMarkdown = 0 == $reflectionMethod->getNumberOfParameters() ? '' : <<<EOF
+        $paramsMarkdown = 0 == $reflectionMethod->getNumberOfParameters() ? '' : <<<'EOF'
 ### 请求参数
 参数名|类型|是否可选|默认值|说明
 -----|----|-----|-------|---

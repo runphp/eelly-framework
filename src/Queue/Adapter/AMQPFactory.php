@@ -70,9 +70,9 @@ class AMQPFactory extends Injectable implements QueueFactoryInterface
      * ];
      * ```
      *
-     * @param array  $connectionOptions 连接信息
-     * @param string $defaultProducer   默认生产者
-     * @param string $defaultConsumer   默认消费者
+     * @param array $connectionOptions 连接信息
+     * @param string $defaultProducer   默认生产�
+     * @param string $defaultConsumer   默认消费�
      */
     public function __construct(array $connectionOptions, string $defaultProducer, string $defaultConsumer)
     {
