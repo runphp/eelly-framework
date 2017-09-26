@@ -82,6 +82,7 @@ class HttpServerListener extends AbstractListener
         $this->di->set('request', $request);
         $this->di->set('response', ServiceResponse::class);
         $this->convertSwooleRequestToPhalconRequest($httpRequest, $request);
+
         try {
             $response = $this->application->handle();
         } catch (LogicException $e) {
