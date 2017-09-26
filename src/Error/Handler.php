@@ -133,6 +133,7 @@ class Handler extends Injectable
                 'line'    => $line,
             ]);
         }
+
         throw new ErrorException($message, 0, $code, $file, $line);
     }
 
