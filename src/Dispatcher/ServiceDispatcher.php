@@ -152,7 +152,7 @@ class ServiceDispatcher extends Dispatcher
                     $return[$key] = $functionReplaceEmptyArray($value);
                     continue;
                 }
-                if (self::FORM_EMPTY_ARRAY_STR == $value) {
+                if (self::FORM_EMPTY_ARRAY_STR === $value) {
                     $return[$key] = [];
                 } else {
                     $return[$key] = $value;
