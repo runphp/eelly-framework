@@ -422,4 +422,23 @@ abstract class Model extends MvcModel
 
         return (int) $this->getWriteConnection()->affectedRows();
     }
+    
+    /**
+     * 执行部分比较复杂的sql，平时不建议使用
+     *
+     * @param string $sql 原生sql
+     * @return array|void
+     * @author zhangyingdi<zhangyingdi@eelly.net>
+     * @since 2019.03.28
+     */
+    public function sqlQuery(string $sql)
+    {
+        if (empty($sql)) {
+            return;
+        }
+
+        $this->getDI()->get('dbMaster');
+
+        return $this->getReadConnection()->fetchAll($sql);
+    }
 }
