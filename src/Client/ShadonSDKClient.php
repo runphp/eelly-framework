@@ -191,6 +191,40 @@ class ShadonSDKClient
     }
 
     /**
+     * @param string $uri
+     * @param $args
+     *
+     * @throws ErrorException
+     *
+     * @return \GuzzleHttp\Promise\PromiseInterface
+     */
+    public function requestAsyncJson(string $uri, $args)
+    {
+        if (null === $this->accessToken || $this->accessToken->hasExpired()) {
+            $this->accessToken = $this->getAccessToken();
+        }
+        $serviceName = explode('/', $uri)[0];
+        if (!array_key_exists($serviceName, $this->serviceMap)) {
+            throw new ErrorException('Service not found:'.$serviceName);
+        }
+        $options = [
+            'headers' => [
+                'content-type' => 'application/json',
+                'Accept'       => 'application/json',
+            ],
+            'body' => json_encode($args),
+        ];
+        $token = $this->accessToken->getToken();
+        $request = $this->provider->getAuthenticatedRequest('POST', $this->serviceMap[$serviceName].'/'.$uri, $token, $options);
+        $promise = $this->provider->getHttpClient()->sendAsync($request, [
+            'handler' => $this->handlerStack,
+            'debug'   => $this->debug,
+        ]);
+
+        return $promise;
+    }
+
+    /**
      * @param $params
      * @param null $prefix
      *
