@@ -70,6 +70,9 @@ abstract class Injectable extends DiInjectable implements InjectionAwareInterfac
             }
             if ('afterQuery' === $event->getType()) {
                 $profiler->stopProfile();
+                if (100 < $profiler->getNumberTotalStatements()) {
+                    $profiler->reset();
+                }
             }
         });
         // log slow mysql
