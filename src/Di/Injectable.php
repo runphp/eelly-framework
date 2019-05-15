@@ -58,48 +58,6 @@ abstract class Injectable extends DiInjectable implements InjectionAwareInterfac
 
             return $connection;
         });
-        // attach db profile
-        $di->get('eventsManager')->attach('db', function ($event, Mysql $connection): void {
-            /* @var \Phalcon\Db\Profiler $profiler */
-            $profiler = $this->getDI()->getShared('dbProfiler');
-            if ('beforeQuery' === $event->getType()) {
-                $sqlStatement = $connection->getSQLStatement();
-                $sqlVariables = $connection->getSqlVariables();
-                $sqlBindTypes = $connection->getSQLBindTypes();
-                $profiler->startProfile($sqlStatement, $sqlVariables, $sqlBindTypes);
-            }
-            if ('afterQuery' === $event->getType()) {
-                $profiler->stopProfile();
-                if (100 < $profiler->getNumberTotalStatements()) {
-                    $profiler->reset();
-                }
-            }
-        });
-        // log slow mysql
-        register_shutdown_function(function ($di): void {
-            /* @var \Phalcon\Db\Profiler $profiler */
-            $profiler = $di->getShared('dbProfiler');
-            $totalElapsedSeconds = $profiler->getTotalElapsedSeconds();
-            if (0 == $profiler->getNumberTotalStatements() || 5 > $totalElapsedSeconds) {
-                return;
-            }
-            $context = [
-                'numberTotalStatements' => $profiler->getNumberTotalStatements(),
-                'totalElapsedSeconds'   => $totalElapsedSeconds,
-                'profiles'              => [],
-            ];
-            foreach ($profiler->getProfiles() as $item) {
-                $context['profiles'][] = [
-                    'sqlStatement'        => $item->getSqlStatement(),
-                    'sqlVariables'        => $item->getSqlVariables(),
-                    'sqlBindTypes'        => $item->getSqlBindTypes(),
-                    'totalElapsedSeconds' => $item->getTotalElapsedSeconds(),
-                ];
-            }
-            /* @var \Monolog\Logger $logger */
-            $logger = $di->getShared('errorLogger');
-            $logger->info('Slow sql', $context);
-        }, $di);
         // register modelsMetadata service
         $di->setShared('modelsMetadata', function () {
             $config = $this->getModuleConfig()->mysql->metaData->toArray();
