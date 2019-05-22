@@ -86,4 +86,12 @@ class Consumer extends \Thumper\Consumer
             $this->consumed = 0;
         }
     }
+
+    /**
+     * @return string
+     */
+    protected function getConsumerTag()
+    {
+        return 'PP_'.date('mdHis').'_'.getmypid();
+    }
 }
