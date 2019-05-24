@@ -267,7 +267,7 @@ class QueueConsumerCommand extends SymfonyCommand implements InjectionAwareInter
                     throw $e;
                 }
                 $usedTime = microtime(true) - $start;
-                if (QueueConsumerCommand::WARNING_USED_TIME < $usedTime) {
+                if (self::WARNING_USED_TIME < $usedTime) {
                     $this->logger->warning('Occur slow consumer', ['pid' => $pid, 'used' => $usedTime, 'msg' => $msg]);
                 }
                 $this->write(sprintf('%s %d %d "%s::%s()" "%s" %s', DateTime::formatTime(), $pid, $num, $msg['class'], $msg['method'], json_encode($return), $usedTime));
