@@ -52,6 +52,13 @@ class QueueConsumerCommand extends SymfonyCommand implements InjectionAwareInter
     use InjectableTrait;
 
     /**
+     * 警告消费时间(秒).
+     *
+     * @var int
+     */
+    public const WARNING_USED_TIME = 5;
+
+    /**
      * @var array
      */
     private $workers = [];
@@ -260,6 +267,9 @@ class QueueConsumerCommand extends SymfonyCommand implements InjectionAwareInter
                     throw $e;
                 }
                 $usedTime = microtime(true) - $start;
+                if (self::WARNING_USED_TIME < $usedTime) {
+                    $this->logger->warning('Occur slow consumer', ['pid' => $pid, 'used' => $usedTime, 'msg' => $msg]);
+                }
                 $this->write(sprintf('%s %d %d "%s::%s()" "%s" %s', DateTime::formatTime(), $pid, $num, $msg['class'], $msg['method'], json_encode($return), $usedTime));
             }
         };

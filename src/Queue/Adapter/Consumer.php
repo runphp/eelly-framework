@@ -92,6 +92,11 @@ class Consumer extends \Thumper\Consumer
      */
     protected function getConsumerTag()
     {
-        return 'PP_'.date('mdHis').'_'.getmypid();
+        static $time;
+        if (null === $time) {
+            $time = date('mdHis');
+        }
+
+        return 'PP_'.$time.'_'.getmypid();
     }
 }
