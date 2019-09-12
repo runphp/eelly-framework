@@ -144,14 +144,10 @@ class QueueConsumerCommand extends SymfonyCommand implements InjectionAwareInter
                 try {
                     $consumer->consume(100);
                 } catch (\PhpAmqpLib\Exception\AMQPTimeoutException $e) {
-                    $worker->write(sprintf('%s %d -1 "%s line %s %s"', DateTime::formatTime(), $pid, \get_class($e), __LINE__, $e->getMessage()));
-                    $connection = $consumer->getConnection();
-                    $connection->reconnect();
-                } catch (\PhpAmqpLib\Exception\AMQPRuntimeException | \PhpAmqpLib\Exception\AMQPProtocolException $e) {
-                    $worker->write(sprintf('%s %d -1 "%s line %s %s"', DateTime::formatTime(), $pid, \get_class($e), __LINE__, $e->getMessage()));
+                    // continue
+                }  catch (\PhpAmqpLib\Exception\AMQPExceptionInterface $e) {
                     $consumer = $worker->createConsumer($exchange, $routingKey, $queue);
                 } catch (\Throwable $e) {
-                    $worker->write(sprintf('%s %d -1 "%s line %s %s"', DateTime::formatTime(), $pid, \get_class($e), __LINE__, $e->getMessage()));
                     $this->di->getShared('errorLogger')->error('UncaughtException', [
                         'file'  => $e->getFile(),
                         'line'  => $e->getLine(),
@@ -160,6 +156,9 @@ class QueueConsumerCommand extends SymfonyCommand implements InjectionAwareInter
                             $e->getMessage(),
                         ],
                     ]);
+                }
+                if (isset($e)) {
+                    $worker->write(sprintf('%s %d -1 "%s line %s %s"', DateTime::formatTime(), $pid, \get_class($e), __LINE__, $e->getMessage()));
                 }
             }
         }) extends Process{
@@ -224,9 +223,13 @@ class QueueConsumerCommand extends SymfonyCommand implements InjectionAwareInter
                     function ($msgBody): void {
                         try {
                             $msg = \GuzzleHttp\json_decode($msgBody, true);
-                            $this->consumerCallback($msg);
+                            if (is_array($msg)) {
+                                $this->consumerCallback($msg);
+                            } else {
+                                $this->write(sprintf('%s %d -1 "%s line %s %s"', DateTime::formatTime(), getmypid(), \get_class($e), __LINE__, $msgBody));
+                            }
                         } catch (\InvalidArgumentException $e) {
-                            $this->logger->info($e->getMessage(), [$msgBody]);
+                            $this->write(sprintf('%s %d -1 "%s line %s %s"', DateTime::formatTime(), getmypid(), \get_class($e), __LINE__, $msgBody));
                         }
                     }
                 );
