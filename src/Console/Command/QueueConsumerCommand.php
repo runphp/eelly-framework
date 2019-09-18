@@ -77,23 +77,34 @@ class QueueConsumerCommand extends SymfonyCommand implements InjectionAwareInter
      */
     private $atomic;
 
+    /**
+     * @var string
+     */
+    private $exchange;
+
+    /**
+     * @var string
+     */
+    private $routingKey;
+
+    /**
+     * @var string
+     */
+    private $queue;
+
     public function onWorkerStart(\Swoole\Process\Pool $pool, int $workerId): void
     {
-        $process = $pool->getProcess($workerId);
-        $exchange = $this->input->getArgument('exchange');
-        $routingKey = $this->input->getOption('routingKey');
-        $queue = $this->input->getOption('queue');
-        $processName = sprintf('%s.%s.%s#%d', $exchange, $routingKey, $queue, $workerId);
-        $process->name($processName);
+        $processName = sprintf('%s.%s.%s#%d', $this->exchange, $this->routingKey, $this->queue, $workerId);
+        \swoole_set_process_name($processName);
         $this->output->writeln($processName);
-        $consumer = $this->createConsumer($exchange, $routingKey, $queue);
+        $consumer = $this->createConsumer();
         while (true) {
             try {
                 $consumer->consume(100);
             } catch (\PhpAmqpLib\Exception\AMQPTimeoutException $e) {
                 // continue
             } catch (\PhpAmqpLib\Exception\AMQPExceptionInterface $e) {
-                $consumer = $this->createConsumer($exchange, $routingKey, $queue);
+                $consumer = $this->createConsumer();
             } catch (\Throwable $e) {
                 $this->errorLogger->error('UncaughtException', [
                     'file'  => $e->getFile(),
@@ -138,20 +149,25 @@ class QueueConsumerCommand extends SymfonyCommand implements InjectionAwareInter
         $this->input = $input;
         $this->output = $output;
         $this->atomic = new Atomic();
+        $this->exchange = $this->input->getArgument('exchange');
+        $this->routingKey = $this->input->getOption('routingKey');
+        $this->queue = $this->input->getOption('queue');
         if ($input->hasParameterOption(['--daemonize', '-d'], true)) {
             \swoole_process::daemon();
         }
+        swoole_set_process_name(sprintf('%s.%s.%s#%d', $this->exchange, $this->routingKey, $this->queue, -1));
+
         $count = (int) $this->input->getOption('count');
         $pool = new \Swoole\Process\Pool($count);
         $pool->on('workerStart', [$this, 'onWorkerStart']);
         $pool->start();
     }
 
-    private function createConsumer($exchange, $routingKey, $queue)
+    private function createConsumer()
     {
-        $moduleName = ucfirst($exchange).'\\Module';
+        $moduleName = ucfirst($this->exchange).'\\Module';
         if (!class_exists($moduleName)) {
-            throw new InvalidArgumentException('Not found exchange: '.$exchange);
+            throw new InvalidArgumentException('Not found exchange: '.$this->exchange);
         }
         /**
          * @var \Shadon\Mvc\AbstractModule
@@ -170,9 +186,9 @@ class QueueConsumerCommand extends SymfonyCommand implements InjectionAwareInter
             'prefetch_count' => 1,
             'global'         => false,
         ]);
-        $consumer->setExchangeOptions(['name' => $exchange, 'type' => 'topic']);
-        $consumer->setRoutingKey($routingKey);
-        $consumer->setQueueOptions(['name' => $exchange.'.'.$routingKey.'.'.$queue]);
+        $consumer->setExchangeOptions(['name' => $this->exchange, 'type' => 'topic']);
+        $consumer->setRoutingKey($this->routingKey);
+        $consumer->setQueueOptions(['name' => $this->exchange.'.'.$this->routingKey.'.'.$this->queue]);
 
         $consumer->setCallback(
             function ($msgBody): void {
