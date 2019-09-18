@@ -163,56 +163,16 @@ class QueueConsumerCommand extends SymfonyCommand implements InjectionAwareInter
         $pool->start();
     }
 
-    private function createConsumer()
-    {
-        $moduleName = ucfirst($this->exchange).'\\Module';
-        if (!class_exists($moduleName)) {
-            throw new InvalidArgumentException('Not found exchange: '.$this->exchange);
-        }
-        /**
-         * @var \Shadon\Mvc\AbstractModule
-         */
-        $moduleObject = $this->di->getShared($moduleName);
-        /*
-         * 'registerAutoloaders' and 'registerServices' are automatically called
-         */
-        $moduleObject->registerAutoloaders($this->di);
-        $moduleObject->registerServices($this->di);
-        /* @var \Shadon\Queue\Adapter\Consumer $consumer */
-        $queueFactory = $this->di->get('queueFactory');
-        $consumer = $queueFactory->createConsumer();
-        $consumer->setQos([
-            'prefetch_size'  => 0,
-            'prefetch_count' => 1,
-            'global'         => false,
-        ]);
-        $consumer->setExchangeOptions(['name' => $this->exchange, 'type' => 'topic']);
-        $consumer->setRoutingKey($this->routingKey);
-        $consumer->setQueueOptions(['name' => $this->exchange.'.'.$this->routingKey.'.'.$this->queue]);
-
-        $consumer->setCallback(
-            function ($msgBody): void {
-                try {
-                    $msg = \GuzzleHttp\json_decode($msgBody, true);
-                    if (\is_array($msg)) {
-                        $this->consumerCallback($msg);
-                    } else {
-                        $this->output->writeln(sprintf('%s %d -1 "%s line %s %s"', DateTime::formatTime(), getmypid(), \get_class($e), __LINE__, $msgBody));
-                    }
-                } catch (\InvalidArgumentException $e) {
-                    $this->output->writeln(sprintf('%s %d -1 "%s line %s %s"', DateTime::formatTime(), getmypid(), \get_class($e), __LINE__, $msgBody));
-                }
-            }
-        );
-
-        return $consumer;
-    }
-
     /**
-     * @param array $msg
+     * @param mixed $msg
      */
-    private function consumerCallback(array $msg): void
+    protected function consumerCallback($msg): void
     {
+        if (!\is_array($msg) || !isset($msg['class'], $msg['method'], $msg['params'])) {
+            $this->output->writeln(sprintf('%s %d -1 error msg "%s"', DateTime::formatTime(), getmypid(), json_encode($msg)));
+
+            return;
+        }
         try {
             $object = $this->di->getShared($msg['class']);
         } catch (\Phalcon\Di\Exception $e) {
@@ -245,5 +205,46 @@ class QueueConsumerCommand extends SymfonyCommand implements InjectionAwareInter
             $this->errorLogger->warning('Occur slow consumer', ['pid' => $pid, 'used' => $usedTime, 'msg' => $msg]);
         }
         $this->output->writeln(sprintf('%s %d %d "%s::%s()" "%s" %s', DateTime::formatTime(), $pid, $num, $msg['class'], $msg['method'], json_encode($return), $usedTime));
+    }
+
+    private function createConsumer()
+    {
+        $moduleName = ucfirst($this->exchange).'\\Module';
+        if (!class_exists($moduleName)) {
+            throw new InvalidArgumentException('Not found exchange: '.$this->exchange);
+        }
+        /**
+         * @var \Shadon\Mvc\AbstractModule
+         */
+        $moduleObject = $this->di->getShared($moduleName);
+        /*
+         * 'registerAutoloaders' and 'registerServices' are automatically called
+         */
+        $moduleObject->registerAutoloaders($this->di);
+        $moduleObject->registerServices($this->di);
+        /* @var \Shadon\Queue\Adapter\Consumer $consumer */
+        $queueFactory = $this->di->get('queueFactory');
+        $consumer = $queueFactory->createConsumer();
+        $consumer->setQos([
+            'prefetch_size'  => 0,
+            'prefetch_count' => 1,
+            'global'         => false,
+        ]);
+        $consumer->setExchangeOptions(['name' => $this->exchange, 'type' => 'topic']);
+        $consumer->setRoutingKey($this->routingKey);
+        $consumer->setQueueOptions(['name' => $this->exchange.'.'.$this->routingKey.'.'.$this->queue]);
+
+        $consumer->setCallback(
+            function ($msgBody): void {
+                try {
+                    $msg = \GuzzleHttp\json_decode($msgBody, true);
+                    $this->consumerCallback($msg);
+                } catch (\InvalidArgumentException $e) {
+                    $this->output->writeln(sprintf('%s %d -1 "%s line %s %s"', DateTime::formatTime(), getmypid(), \get_class($e), __LINE__, $msgBody));
+                }
+            }
+        );
+
+        return $consumer;
     }
 }
