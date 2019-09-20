@@ -116,7 +116,7 @@ class QueueConsumerCommand extends SymfonyCommand implements InjectionAwareInter
                 ]);
             }
             if (isset($e)) {
-                $this->output->writeln(sprintf('%s %d -1 "%s line %s %s"', DateTime::formatTime(), $pid, \get_class($e), __LINE__, $e->getMessage()));
+                $this->output->writeln(sprintf('%s %d -1 "%s line %s %s"', DateTime::formatTime(), getmypid(), \get_class($e), __LINE__, $e->getMessage()));
             }
         }
     }
