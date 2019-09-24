@@ -55,7 +55,14 @@ class QueueConsumerCommand extends SymfonyCommand implements InjectionAwareInter
      *
      * @var int
      */
-    public const WARNING_USED_TIME = 5;
+    private const WARNING_USED_TIME = 5;
+
+    /**
+     * 进程重启时间(秒).
+     *
+     * @var int
+     */
+    private const PROCESS_RESTART_TIME = 3600;
 
     /**
      * @var array
@@ -95,9 +102,10 @@ class QueueConsumerCommand extends SymfonyCommand implements InjectionAwareInter
     public function onWorkerStart(\Swoole\Process\Pool $pool, int $workerId): void
     {
         $processName = sprintf('%s.%s.%s#%d', $this->exchange, $this->routingKey, $this->queue, $workerId);
-        \swoole_set_process_name($processName);
+        swoole_set_process_name($processName);
         $this->output->writeln($processName);
         $consumer = $this->createConsumer();
+        $workStartTime = time();
         while (true) {
             try {
                 $consumer->consume(100);
@@ -114,6 +122,13 @@ class QueueConsumerCommand extends SymfonyCommand implements InjectionAwareInter
                         $e->getMessage(),
                     ],
                 ]);
+            }
+            if (self::PROCESS_RESTART_TIME < (time() - $workStartTime)) {
+                $connection = $consumer->getConnection();
+                if ($connection && $connection->isConnected()) {
+                    $connection->close();
+                }
+                break;
             }
             if (isset($e)) {
                 $this->output->writeln(sprintf('%s %d -1 "%s line %s %s"', DateTime::formatTime(), getmypid(), \get_class($e), __LINE__, $e->getMessage()));
@@ -201,12 +216,15 @@ class QueueConsumerCommand extends SymfonyCommand implements InjectionAwareInter
             throw $e;
         }
         $usedTime = microtime(true) - $start;
-        if (5 < $usedTime) {
-            $this->errorLogger->warning('Occur slow consumer', ['pid' => $pid, 'used' => $usedTime, 'msg' => $msg]);
+        if (self::WARNING_USED_TIME < $usedTime) {
+            $this->errorLogger->warning(sprintf('Slow consume used %.3fs', $used), ['pid' => $pid, 'msg' => $msg]);
         }
         $this->output->writeln(sprintf('%s %d %d "%s::%s()" "%s" %s', DateTime::formatTime(), $pid, $num, $msg['class'], $msg['method'], json_encode($return), $usedTime));
     }
 
+    /**
+     * @return \Shadon\Queue\Adapter\Consumer
+     */
     private function createConsumer()
     {
         $moduleName = ucfirst($this->exchange).'\\Module';
