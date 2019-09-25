@@ -58,13 +58,6 @@ class QueueConsumerCommand extends SymfonyCommand implements InjectionAwareInter
     private const WARNING_USED_TIME = 5;
 
     /**
-     * 进程重启时间(秒).
-     *
-     * @var int
-     */
-    private const PROCESS_RESTART_TIME = 3600;
-
-    /**
      * @var array
      */
     private $workers = [];
@@ -105,7 +98,6 @@ class QueueConsumerCommand extends SymfonyCommand implements InjectionAwareInter
         swoole_set_process_name($processName);
         $this->output->writeln($processName);
         $consumer = $this->createConsumer();
-        $workStartTime = time();
         while (true) {
             try {
                 $consumer->consume(100);
@@ -122,13 +114,6 @@ class QueueConsumerCommand extends SymfonyCommand implements InjectionAwareInter
                         $e->getMessage(),
                     ],
                 ]);
-            }
-            if (self::PROCESS_RESTART_TIME < (time() - $workStartTime)) {
-                $connection = $consumer->getConnection();
-                if ($connection && $connection->isConnected()) {
-                    $connection->close();
-                }
-                break;
             }
             if (isset($e)) {
                 $this->output->writeln(sprintf('%s %d -1 "%s line %s %s"', DateTime::formatTime(), getmypid(), \get_class($e), __LINE__, $e->getMessage()));
