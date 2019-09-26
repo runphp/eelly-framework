@@ -202,7 +202,7 @@ class QueueConsumerCommand extends SymfonyCommand implements InjectionAwareInter
         }
         $usedTime = microtime(true) - $start;
         if (self::WARNING_USED_TIME < $usedTime) {
-            $this->errorLogger->warning(sprintf('Slow consume used %.3fs', $used), ['pid' => $pid, 'msg' => $msg]);
+            $this->errorLogger->warning(sprintf('Slow consume used %.3fs', $usedTime), ['pid' => $pid, 'msg' => $msg]);
         }
         $this->output->writeln(sprintf('%s %d %d "%s::%s()" "%s" %s', DateTime::formatTime(), $pid, $num, $msg['class'], $msg['method'], json_encode($return), $usedTime));
     }
