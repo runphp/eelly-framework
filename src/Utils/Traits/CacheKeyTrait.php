@@ -36,7 +36,6 @@ trait CacheKeyTrait
     private function createKeyWithArray(array $parameters)
     {
         $uniqueKey = [];
-
         foreach ($parameters as $key => $value) {
             if (is_scalar($value)) {
                 $uniqueKey[] = $key.':'.$value;
@@ -46,7 +45,11 @@ trait CacheKeyTrait
                 throw new \InvalidArgumentException('can not use cache annotation', 500);
             }
         }
+        $keyWithArray = implode(',', $uniqueKey);
+        if (100 < \strlen($keyWithArray)) {
+            $keyWithArray = md5($keyWithArray);
+        }
 
-        return implode(',', $uniqueKey);
+        return $keyWithArray;
     }
 }
