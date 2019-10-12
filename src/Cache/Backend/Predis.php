@@ -57,9 +57,9 @@ class Predis extends Redis
      *
      * @see \Phalcon\Cache\Backend\Redis::save()
      *
-     * @param null|mixed $keyName
-     * @param null|mixed $content
-     * @param null|mixed $lifetime
+     * @param mixed|null $keyName
+     * @param mixed|null $content
+     * @param mixed|null $lifetime
      * @param mixed      $stopBuffer
      */
     public function save($keyName = null, $content = null, $lifetime = null, $stopBuffer = true)

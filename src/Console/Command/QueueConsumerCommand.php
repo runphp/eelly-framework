@@ -156,7 +156,6 @@ class QueueConsumerCommand extends SymfonyCommand implements InjectionAwareInter
             \swoole_process::daemon();
         }
         swoole_set_process_name(sprintf('%s.%s.%s#%d', $this->exchange, $this->routingKey, $this->queue, -1));
-
         $count = (int) $this->input->getOption('count');
         $pool = new \Swoole\Process\Pool($count);
         $pool->on('workerStart', [$this, 'onWorkerStart']);

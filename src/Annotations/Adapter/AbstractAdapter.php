@@ -44,7 +44,7 @@ abstract class AbstractAdapter extends Adapter implements AdapterInterface
     /**
      * Class constructor.
      *
-     * @param null|array $options
+     * @param array|null $options
      *
      * @throws \Phalcon\Mvc\Model\Exception
      */

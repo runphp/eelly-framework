@@ -93,7 +93,7 @@ class Manager extends Component
      *
      * @param string      $view
      * @param array       $params   optional
-     * @param null|string $viewsDir optional
+     * @param string|null $viewsDir optional
      *
      * @return \Phalcon\Mailer\Message
      *

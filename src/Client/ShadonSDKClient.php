@@ -177,7 +177,7 @@ class ShadonSDKClient
             'body' => $stream,
         ];
         $serviceName = explode('/', $uri)[0];
-        if (!array_key_exists($serviceName, $this->serviceMap)) {
+        if (!\array_key_exists($serviceName, $this->serviceMap)) {
             throw new ErrorException('Service not found:'.$serviceName);
         }
         $token = $this->accessToken->getToken();
@@ -204,7 +204,7 @@ class ShadonSDKClient
             $this->accessToken = $this->getAccessToken();
         }
         $serviceName = explode('/', $uri)[0];
-        if (!array_key_exists($serviceName, $this->serviceMap)) {
+        if (!\array_key_exists($serviceName, $this->serviceMap)) {
             throw new ErrorException('Service not found:'.$serviceName);
         }
         $options = [

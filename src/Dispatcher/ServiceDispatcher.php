@@ -190,7 +190,7 @@ class ServiceDispatcher extends Dispatcher
                 }
             }
             // 校验参数
-            if (array_key_exists($position, $routeParams)) {
+            if (\array_key_exists($position, $routeParams)) {
                 if (!$checkedParameter) {
                     if (\in_array($expectedType, ['bool', 'int', 'float', 'string', 'array'])) {
                         if (\is_array($routeParams[$position]) && 'array' != $expectedType) {
@@ -199,7 +199,7 @@ class ServiceDispatcher extends Dispatcher
                         if (self::FORM_EMPTY_ARRAY_STR === $routeParams[$position]) {
                             $routeParams[$position] = [];
                         } else {
-                            \settype($routeParams[$position], $expectedType);
+                            settype($routeParams[$position], $expectedType);
                             if (\is_array($routeParams[$position]) && !empty($routeParams[$position])) {
                                 $routeParams[$position] = $functionReplaceEmptyArray($routeParams[$position]);
                             }

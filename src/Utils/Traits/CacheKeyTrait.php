@@ -26,7 +26,11 @@ trait CacheKeyTrait
      */
     protected function keyName($class, $method, array $params)
     {
-        return sprintf('%s:%s:%s', $class, $method, $this->createKeyWithArray($params));
+        $keyName = sprintf('%s:%s:%s', $class, $method, $this->createKeyWithArray($params));
+        // Add hash tag
+        $keyName .= ':{'.md5($keyName).'}';
+
+        return $keyName;
     }
 
     private function createKeyWithArray(array $parameters)
