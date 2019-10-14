@@ -37,6 +37,9 @@ trait CacheKeyTrait
     {
         $uniqueKey = [];
         foreach ($parameters as $key => $value) {
+            if (null === $value) {
+                continue;
+            }
             if (is_scalar($value)) {
                 $uniqueKey[] = $key.':'.$value;
             } elseif (\is_array($value)) {
