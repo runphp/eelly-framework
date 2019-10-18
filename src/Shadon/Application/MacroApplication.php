@@ -47,12 +47,15 @@ class MacroApplication
     /**
      * MacroApplication constructor.
      *
+     * @param string      $namespace
      * @param ClassLoader $classLoader
+     *
+     * @throws \Exception
      */
-    public function __construct(ClassLoader $classLoader)
+    public function __construct(string $namespace, ClassLoader $classLoader)
     {
         $this->di = new DI\Container();
-        $this->initRuntime();
+        $this->initRuntime($namespace);
         $this->initService($classLoader);
     }
 
@@ -92,7 +95,7 @@ class MacroApplication
                 $handler = $routeInfo[1]; // 获得处理函数
                 $vars = $routeInfo[2]; // 获取请求参数
                 // ... call $handler with $vars // 调用处理函数
-                $bizData = $handler();
+                $bizData = $handler(...array_values($vars));
                 $returnData = is_scalar($bizData) ? ['result' => $bizData] : $bizData;
                 $returnData = [
                     'data'   => $returnData,
@@ -104,7 +107,7 @@ class MacroApplication
                 ];
                 break;
         }
-        $returnData['reuqestId'] = APP['requestId'];
+        $returnData['status']['reuqestId'] = APP['requestId'];
         $this->response->setData($returnData);
         $this->response->send();
 
@@ -112,9 +115,11 @@ class MacroApplication
     }
 
     /**
+     * @param string $namespace
+     *
      * @throws \Exception
      */
-    private function initRuntime(): void
+    private function initRuntime(string $namespace): void
     {
         // created default .env
         if (!file_exists('.env')) {
@@ -129,6 +134,7 @@ class MacroApplication
         $appEnv = getenv('APP_ENV');
         $appKey = getenv('APP_KEY');
         \define('APP', [
+            'namespace'  => $namespace,
             'env'        => $appEnv,
             'key'        => $appKey,
             'requestId'  => (string) new ObjectId(),
@@ -146,9 +152,11 @@ class MacroApplication
             $r->addRoute('GET', '/', function () {
                 return 'Hello, I\'m Shadon (｡A｡)';
             });
-            $r->addRoute('POST', '/{module}/{controller}/{action}', function () {
+            $r->addRoute(['POST', 'GET'], '/{module}/{controller}/{action}', function ($module, $controller, $method): void {
+                //dd($module, $controller, $method);
+                // init config
+                $config = require 'var/config/'.APP['env'].'/config.php';
                 // TODO
-                return  '业务数据';
             });
         });
     }
