@@ -61,7 +61,7 @@ class MacroApplication
      */
     public function main(): int
     {
-        $routeInfo = $this->dispatcher->dispatch($this->request->getMethod(), $this->request->getUri());
+        $routeInfo = $this->dispatcher->dispatch($this->request->getMethod(), $this->request->getPathInfo());
         switch ($routeInfo[0]) {
             case FastRoute\Dispatcher::NOT_FOUND:
                 // ... 404 Not Found 没找到对应的方法
@@ -92,9 +92,19 @@ class MacroApplication
                 $handler = $routeInfo[1]; // 获得处理函数
                 $vars = $routeInfo[2]; // 获取请求参数
                 // ... call $handler with $vars // 调用处理函数
-                $returnData = $handler();
+                $bizData = $handler();
+                $returnData = is_scalar($bizData) ? ['result' => $bizData] : $bizData;
+                $returnData = [
+                    'data'   => $returnData,
+                    'status' => [
+                        'error' => '',
+                        'tips'  => '',
+                        'code'  => Response::HTTP_OK,
+                    ],
+                ];
                 break;
         }
+        $returnData['reuqestId'] = APP['requestId'];
         $this->response->setData($returnData);
         $this->response->send();
 
@@ -133,8 +143,8 @@ class MacroApplication
         $this->request = Request::createFromGlobals();
         $this->response = JsonResponse::create(null, Response::HTTP_OK, ['content-type' => 'application/json']);
         $this->dispatcher = FastRoute\simpleDispatcher(function (FastRoute\RouteCollector $r): void {
-            $r->addRoute('GET', '/', function (): void {
-                echo 'Hello, I\'m Shadon (｡A｡)';
+            $r->addRoute('GET', '/', function () {
+                return 'Hello, I\'m Shadon (｡A｡)';
             });
             $r->addRoute('POST', '/{module}/{controller}/{action}', function () {
                 // TODO
