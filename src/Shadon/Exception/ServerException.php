@@ -13,6 +13,6 @@ declare(strict_types=1);
 
 namespace Shadon\Exception;
 
-class ServerException extends RequestException
+class ServerException extends Exception
 {
 }

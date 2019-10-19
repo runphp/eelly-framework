@@ -11,8 +11,14 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace Shadon\Exception;
+namespace Shadon\Mvc;
 
-class ClientException extends Exception
+interface ModuleDefinitionInterface
 {
+    /**
+     * Initial module instance.
+     *
+     * @return bool
+     */
+    public function initial(): bool;
 }

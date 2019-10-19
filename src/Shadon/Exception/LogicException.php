@@ -13,6 +13,10 @@ declare(strict_types=1);
 
 namespace Shadon\Exception;
 
-class ClientException extends Exception
+class LogicException extends Exception
 {
+    public function __construct($message = '业务逻辑异常', $code = 4001, $tips = '业务逻辑异常', Throwable $previous = null)
+    {
+        parent::__construct($message, $code, $tips, $previous);
+    }
 }

@@ -13,6 +13,10 @@ declare(strict_types=1);
 
 namespace Shadon\Exception;
 
-class ClientException extends Exception
+class MethodNotAllowedException extends ClientException
 {
+    public function __construct($message = 'method not allowed', $tips = 'method not allowed', Throwable $previous = null)
+    {
+        parent::__construct($message, 405, $tips, $previous);
+    }
 }
