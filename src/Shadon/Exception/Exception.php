@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace Shadon\Exception;
 
+use JsonSerializable;
 use Throwable;
 
 /**
@@ -20,7 +21,7 @@ use Throwable;
  *
  * @author hehui<runphp@qq.com>
  */
-class Exception extends \Exception
+class Exception extends \Exception implements JsonSerializable
 {
     /**
      * tips.
@@ -33,5 +34,18 @@ class Exception extends \Exception
     {
         parent::__construct($message, $code, $previous);
         $this->tips = $tips;
+    }
+
+    public function jsonSerialize()
+    {
+        return [
+            'exception' => \get_class($this),
+            'message'   => $this->message,
+            'tips'      => $this->tips,
+            'code'      => $this->code,
+            'file'      => $this->file,
+            'line'      => $this->line,
+            'trace'     => $this->getTrace(),
+        ];
     }
 }
