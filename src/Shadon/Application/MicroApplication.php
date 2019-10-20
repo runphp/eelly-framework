@@ -34,14 +34,14 @@ use Symfony\Component\HttpFoundation\Response;
  *
  * hehui<runphp@qq.com>.
  */
-class MacroApplication
+class MicroApplication
 {
     /**
      * server name.
      *
      * @var string
      */
-    private const SERVER_NAME = 'Shadon/v2.0';
+    public const SERVER_NAME = 'Shadon/v2.0';
 
     /**
      * @var Di\Container
@@ -69,7 +69,7 @@ class MacroApplication
     private $classLoader;
 
     /**
-     * @var callable|string
+     * @var callable
      */
     private $transportFunc;
 
@@ -78,7 +78,7 @@ class MacroApplication
      *
      * @param string      $namespace
      * @param ClassLoader $classLoader
-     * @param string      $transportFunc
+     * @param callable    $transportFunc
      *
      * @throws \Exception
      */
@@ -106,6 +106,7 @@ class MacroApplication
      */
     public function main(): int
     {
+        // handler error
         error_reporting(E_ALL);
         ini_set('display_errors', '0');
         set_error_handler(function ($code, $message, $file = '', $line = 0, $context = []): void {
@@ -115,10 +116,12 @@ class MacroApplication
             $lastError = error_get_last();
             // TODO
         });
+
         $requestId = (string) new ObjectId();
         $routeInfo = $this->dispatcher->dispatch($this->request->getMethod(), $this->request->getPathInfo());
+
         try {
-            $returnData = $this->handle($routeInfo);
+            $returnData = $this->handleRouteInfo($routeInfo);
         } catch (LogicException $e) {
             $returnData = $e;
             $return = 0;
@@ -130,15 +133,15 @@ class MacroApplication
             $returnData = $e;
             $return = 1;
         }
-        $func = $this->transportFunc;
-        $this->response->setData($func($requestId, $this->request, $returnData));
-
+        $transportFunc = $this->transportFunc;
+        $returnData = $transportFunc($requestId, $returnData);
+        $this->response->setData($returnData);
         $this->response->send();
 
         return $return;
     }
 
-    private function handle(array $routeInfo)
+    private function handleRouteInfo(array $routeInfo)
     {
         switch ($routeInfo[0]) {
             case FastRoute\Dispatcher::NOT_FOUND:

@@ -36,6 +36,14 @@ class Exception extends \Exception implements JsonSerializable
         $this->tips = $tips;
     }
 
+    /**
+     * @return string
+     */
+    public function getTips(): string
+    {
+        return $this->tips;
+    }
+
     public function jsonSerialize()
     {
         return [
