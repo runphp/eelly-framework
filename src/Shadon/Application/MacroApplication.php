@@ -23,6 +23,8 @@ use Shadon\Exception\Exception;
 use Shadon\Exception\LogicException;
 use Shadon\Exception\MethodNotAllowedException;
 use Shadon\Exception\NotFoundException;
+use Shadon\Exception\RequestException;
+use Shadon\Exception\ServerException;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -34,6 +36,13 @@ use Symfony\Component\HttpFoundation\Response;
  */
 class MacroApplication
 {
+    /**
+     * server name.
+     *
+     * @var string
+     */
+    private const SERVER_NAME = 'Shadon/v2.0';
+
     /**
      * @var Di\Container
      */
@@ -97,6 +106,16 @@ class MacroApplication
      */
     public function main(): int
     {
+        error_reporting(E_ALL);
+        ini_set('display_errors', '0');
+        set_error_handler(function ($code, $message, $file = '', $line = 0, $context = []): void {
+            throw new ServerException('uncatched exception', 500, '服务器异常');
+        }, E_ALL);
+        register_shutdown_function(function (): void {
+            $lastError = error_get_last();
+            // TODO
+        });
+        $requestId = (string) new ObjectId();
         $routeInfo = $this->dispatcher->dispatch($this->request->getMethod(), $this->request->getPathInfo());
         try {
             $returnData = $this->handle($routeInfo);
@@ -112,7 +131,8 @@ class MacroApplication
             $return = 1;
         }
         $func = $this->transportFunc;
-        $this->response->setData($func($returnData));
+        $this->response->setData($func($requestId, $this->request, $returnData));
+
         $this->response->send();
 
         return $return;
@@ -157,14 +177,13 @@ class MacroApplication
             'namespace'  => $namespace,
             'env'        => $appEnv,
             'key'        => $appKey,
-            'requestId'  => (string) new ObjectId(),
          ]);
     }
 
     private function initService(): void
     {
         $this->di->set('request', $this->request = Request::createFromGlobals());
-        $this->di->set('response', $this->response = JsonResponse::create(null, Response::HTTP_OK, ['content-type' => 'application/json']));
+        $this->di->set('response', $this->response = JsonResponse::create(null, Response::HTTP_OK, ['content-type' => 'application/json', 'Server' => self::SERVER_NAME]));
         $this->dispatcher = FastRoute\simpleDispatcher(function (FastRoute\RouteCollector $r): void {
             $r->addRoute('GET', '/', function () {
                 return 'Hello, I\'m Shadon (｡A｡)';
@@ -194,8 +213,28 @@ class MacroApplication
                 if (!method_exists($handlerInstance, $method)) {
                     throw new NotFoundException(sprintf('handler method `%s` not found', $method));
                 }
-                // TODO get request params
-                $params = [[123], ['phalcon']];
+                if (!'json' == $this->request->getContentType()) {
+                    throw new RequestException('bad request,content type must json');
+                }
+                $data = json_decode($this->request->getContent(), true);
+                if (JSON_ERROR_NONE !== json_last_error()) {
+                    throw new RequestException('bad request,content must json');
+                }
+                $classMethod = new \ReflectionMethod($handlerClass, $method);
+                $parameters = $classMethod->getParameters();
+                $params = [];
+                foreach ($parameters as $parameter) {
+                    $paramName = $parameter->getName();
+                    if (isset($data[$paramName])) {
+                        // exist
+                        $params[] = $data[$paramName];
+                    } elseif ($parameter->isDefaultValueAvailable()) {
+                        // has default
+                        $params[] = $parameter->getDefaultValue();
+                    } else {
+                        throw new RequestException(sprintf('bad request,param `%` is required', $paramName));
+                    }
+                }
                 try {
                     $return = $handlerInstance->$method(...$params);
                 } catch (\Throwable $e) {
