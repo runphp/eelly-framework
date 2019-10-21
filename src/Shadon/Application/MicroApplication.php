@@ -88,14 +88,14 @@ class MicroApplication
         $this->transportFunc = $transportFunc;
         $this->initRuntime($namespace);
         $builder = new DI\ContainerBuilder();
-        $builder->enableCompilation(ROOT_PATH.'/var/cache/'.APP['env']);
+        $builder->enableCompilation(ROOT_PATH.'/var/cache');
         $builder->writeProxiesToFile(true, ROOT_PATH.'/var/proxies');
         $builder->useAutowiring(true);
         $builder->useAnnotations(true);
         $builder->addDefinitions(
-            ['appConfig'=> DI\factory(function (string $configPath) {
-                return new Repository(require $configPath);
-            })->parameter('configPath', 'var/config/'.APP['env'].'/config.php')]
+            ['appConfig'=> DI\factory(function () {
+                return new Repository(require 'var/config/'.APP['env'].'/config.php');
+            })]
         );
         $this->di = $builder->build();
         $this->initService();
@@ -191,7 +191,7 @@ class MicroApplication
             $r->addRoute('GET', '/', function () {
                 return 'Hello, I\'m Shadon (｡A｡)';
             });
-            $r->addRoute(['POST', 'GET'], '/{module}/{controller}/{action}', function ($module, $controller, $method) {
+            $r->addRoute(['POST', 'GET'], '/{module:[a-z][a-zA-Z]*}/{controller:[a-z][a-zA-Z]*}/{action:[a-z][a-zA-Z]*}', function ($module, $controller, $method) {
                 $appConfig = $this->di->get('appConfig');
                 $moduleList = $appConfig->get('moduleList');
                 if (!\in_array($module, $moduleList)) {
