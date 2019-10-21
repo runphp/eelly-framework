@@ -37,6 +37,7 @@
 		"php-di/php-di": "^6.0.9",
 		"predis/predis": "^1.1.1",
 		"ralouphie/getallheaders": "^3.0.3",
+		"symfony/cache": "^4.3.5",
 		"symfony/console": "^4.3.5",
 		"symfony/debug": "^4.3.5",
 		"symfony/event-dispatcher": "^4.3.5",

@@ -111,16 +111,18 @@ class MicroApplication
             ],
             [
                 'createMysqlService' => DI\factory(function () {
-                    return function (array $config): void {
+                    return function (array $config): Capsule {
                         $capsule = new Capsule();
                         $capsule->addConnection($config);
                         $capsule->setEventDispatcher(new Dispatcher(new Container()));
                         $capsule->setAsGlobal();
                         $capsule->bootEloquent();
+
+                        return $capsule;
                     };
                 }),
                 'createCacheService' => DI\factory(function (DI\Container $c) {
-                    return function (array $hosts) use ($c): RedisAdapter {
+                    return function (array $hosts, string $namespace) use ($c): RedisAdapter {
                         $redisConfig = [
                             'dsn'     => 'redis:?host['.implode(']&host[', $hosts).']&redis_cluster=1',
                             'options' => [
@@ -135,7 +137,7 @@ class MicroApplication
                             ],
                         ];
                         $redisClient = RedisAdapter::createConnection($redisConfig['dsn'], $redisConfig['options']);
-                        $cache = new RedisAdapter($redisClient, 'kdd-example', 300);
+                        $cache = new RedisAdapter($redisClient, $namespace, 300);
                         $c->set('cache', $cache);
 
                         return $cache;
