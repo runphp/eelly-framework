@@ -13,6 +13,11 @@ declare(strict_types=1);
 
 namespace Shadon\Exception;
 
+/**
+ * Class ServerException.
+ *
+ * @author hehui<runphp@qq.com>
+ */
 class ServerException extends Exception
 {
 }

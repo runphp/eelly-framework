@@ -74,6 +74,13 @@ class MicroApplication
     private $transportFunc;
 
     /**
+     * reserved memory.
+     *
+     * @var string
+     */
+    private $reservedMemory;
+
+    /**
      * MacroApplication constructor.
      *
      * @param string      $namespace
@@ -106,18 +113,26 @@ class MicroApplication
      */
     public function main(): int
     {
+        $requestId = (string) new ObjectId();
+        $transportFunc = $this->transportFunc;
         // handler error
         error_reporting(E_ALL);
         ini_set('display_errors', '0');
         set_error_handler(function ($code, $message, $file = '', $line = 0, $context = []): void {
-            throw new ServerException('uncatched exception', 500, '服务器异常');
+            throw new ServerException($message, Response::HTTP_INTERNAL_SERVER_ERROR, '服务器异常');
         }, E_ALL);
-        register_shutdown_function(function (): void {
+        register_shutdown_function(function ($requestId, $transportFunc): void {
+            $this->reservedMemory = null;
             $lastError = error_get_last();
-            // TODO
-        });
+            // TODO debug file line
+            $returnData = $transportFunc($requestId, new ServerException($lastError['message']));
+            $this->response->setStatusCode(Response::HTTP_INTERNAL_SERVER_ERROR);
+            $this->response->setData($returnData);
+            $this->response->send();
+        // TOTO error log
+        }, $requestId, $transportFunc);
+        $this->reservedMemory = str_repeat('X', 20480);
 
-        $requestId = (string) new ObjectId();
         $routeInfo = $this->dispatcher->dispatch($this->request->getMethod(), $this->request->getPathInfo());
 
         try {
@@ -133,7 +148,6 @@ class MicroApplication
             $returnData = $e;
             $return = 1;
         }
-        $transportFunc = $this->transportFunc;
         $returnData = $transportFunc($requestId, $returnData);
         $this->response->setData($returnData);
         $this->response->send();
@@ -202,7 +216,7 @@ class MicroApplication
                 $this->classLoader->addPsr4($moduleNamespace.'\\', 'src/Module/'.ucfirst($module.'/'));
                 $handlerClass = $moduleNamespace.'\\Logic\\'.ucfirst($controller).'Logic';
                 if (!class_exists($handlerClass)) {
-                    throw new NotFoundException(sprintf('handler `%s` not found', $handlerClass));
+                    throw new NotFoundException(sprintf('handler `%s` not found', $controller));
                 }
                 // initial moudle instance
                 $moduleInstance = $this->di->get($moduleNamespace.'\\Module');
@@ -217,11 +231,11 @@ class MicroApplication
                     throw new NotFoundException(sprintf('handler method `%s` not found', $method));
                 }
                 if (!'json' == $this->request->getContentType()) {
-                    throw new RequestException('bad request,content type must json');
+                    throw new RequestException('bad request, content type must json');
                 }
                 $data = json_decode($this->request->getContent(), true);
                 if (JSON_ERROR_NONE !== json_last_error()) {
-                    throw new RequestException('bad request,content must json');
+                    throw new RequestException('bad request, content must json');
                 }
                 $classMethod = new \ReflectionMethod($handlerClass, $method);
                 $parameters = $classMethod->getParameters();
@@ -235,16 +249,18 @@ class MicroApplication
                         // has default
                         $params[] = $parameter->getDefaultValue();
                     } else {
-                        throw new RequestException(sprintf('bad request,param `%` is required', $paramName));
+                        throw new RequestException(sprintf('bad request, param `%s` is required', $paramName));
                     }
                 }
                 try {
                     $return = $handlerInstance->$method(...$params);
+                } catch (\TypeError $e) {
+                    throw new RequestException($e->getMessage());
                 } catch (\Throwable $e) {
                     if ($e instanceof Exception) {
                         throw $e;
                     } else {
-                        throw new Exception('uncatched exception', 500, '服务器异常', $e);
+                        throw new ServerException($e->getMessage(), Response::HTTP_INTERNAL_SERVER_ERROR, '服务器异常', $e);
                     }
                 }
 

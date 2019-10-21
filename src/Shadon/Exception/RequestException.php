@@ -13,6 +13,13 @@ declare(strict_types=1);
 
 namespace Shadon\Exception;
 
+use Throwable;
+
+/**
+ * Class RequestException.
+ *
+ * @author hehui<runphp@qq.com>
+ */
 class RequestException extends ClientException
 {
     public function __construct($message = 'bad request', $tips = 'bad request', Throwable $previous = null)

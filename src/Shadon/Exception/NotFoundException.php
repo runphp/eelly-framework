@@ -13,6 +13,8 @@ declare(strict_types=1);
 
 namespace Shadon\Exception;
 
+use Throwable;
+
 /**
  * Class NotFoundException.
  *

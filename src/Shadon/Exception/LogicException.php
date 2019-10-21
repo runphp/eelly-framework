@@ -13,6 +13,13 @@ declare(strict_types=1);
 
 namespace Shadon\Exception;
 
+use Throwable;
+
+/**
+ * Class LogicException.
+ *
+ * @author hehui<runphp@qq.com>
+ */
 class LogicException extends Exception
 {
     public function __construct($message = '业务逻辑异常', $code = 4001, $tips = '业务逻辑异常', Throwable $previous = null)

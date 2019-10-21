@@ -13,6 +13,11 @@ declare(strict_types=1);
 
 namespace Shadon\Exception;
 
+/**
+ * Class ClientException.
+ *
+ *  @author hehui<runphp@qq.com>
+ */
 class ClientException extends Exception
 {
 }
