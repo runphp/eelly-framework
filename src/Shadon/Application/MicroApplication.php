@@ -17,6 +17,9 @@ use Composer\Autoload\ClassLoader;
 use DI;
 use FastRoute;
 use Illuminate\Config\Repository;
+use Illuminate\Container\Container;
+use Illuminate\Database\Capsule\Manager as Capsule;
+use Illuminate\Events\Dispatcher;
 use MongoDB\BSON\ObjectId;
 use Shadon\Exception\ClientException;
 use Shadon\Exception\Exception;
@@ -25,6 +28,7 @@ use Shadon\Exception\MethodNotAllowedException;
 use Shadon\Exception\NotFoundException;
 use Shadon\Exception\RequestException;
 use Shadon\Exception\ServerException;
+use Symfony\Component\Cache\Adapter\RedisAdapter;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -94,17 +98,52 @@ class MicroApplication
         $this->classLoader = $classLoader;
         $this->transportFunc = $transportFunc;
         $this->initRuntime($namespace);
-        $builder = new DI\ContainerBuilder();
-        $builder->enableCompilation(ROOT_PATH.'/var/cache');
-        $builder->writeProxiesToFile(true, ROOT_PATH.'/var/proxies');
-        $builder->useAutowiring(true);
-        $builder->useAnnotations(true);
-        $builder->addDefinitions(
-            ['appConfig'=> DI\factory(function () {
-                return new Repository(require 'var/config/'.APP['env'].'/config.php');
-            })]
-        );
-        $this->di = $builder->build();
+        $containerBuilder = new DI\ContainerBuilder();
+        $containerBuilder->enableCompilation(ROOT_PATH.'/var/cache');
+        $containerBuilder->writeProxiesToFile(true, ROOT_PATH.'/var/proxies');
+        $containerBuilder->useAutowiring(true);
+        $containerBuilder->useAnnotations(true);
+        $containerBuilder->addDefinitions(
+            [
+                'appConfig'=> DI\factory(function () {
+                    return new Repository(require 'var/config/'.APP['env'].'/config.php');
+                }),
+            ],
+            [
+                'createMysqlService' => DI\factory(function () {
+                    return function (array $config): void {
+                        $capsule = new Capsule();
+                        $capsule->addConnection($config);
+                        $capsule->setEventDispatcher(new Dispatcher(new Container()));
+                        $capsule->setAsGlobal();
+                        $capsule->bootEloquent();
+                    };
+                }),
+                'createCacheService' => DI\factory(function (DI\Container $c) {
+                    return function (array $hosts) use ($c): RedisAdapter {
+                        $redisConfig = [
+                            'dsn'     => 'redis:?host['.implode(']&host[', $hosts).']&redis_cluster=1',
+                            'options' => [
+                                'compression'    => true,
+                                'lazy'           => true,
+                                'persistent'     => 0,
+                                'persistent_id'  => null,
+                                'tcp_keepalive'  => 0,
+                                'timeout'        => 10,
+                                'read_timeout'   => 10,
+                                'retry_interval' => 0,
+                            ],
+                        ];
+                        $redisClient = RedisAdapter::createConnection($redisConfig['dsn'], $redisConfig['options']);
+                        $cache = new RedisAdapter($redisClient, 'kdd-example', 300);
+                        $c->set('cache', $cache);
+
+                        return $cache;
+                    };
+                }),
+            ]
+         );
+        $this->di = $containerBuilder->build();
         $this->initService();
     }
 
@@ -205,7 +244,7 @@ class MicroApplication
             $r->addRoute('GET', '/', function () {
                 return 'Hello, I\'m '.self::SERVER_NAME;
             });
-            $r->addRoute(['POST', 'GET'], '/{module:[a-z][a-zA-Z]*}/{controller:[a-z][a-zA-Z]*}/{action:[a-z][a-zA-Z]*}', function ($module, $controller, $method) {
+            $r->addRoute('POST', '/{module:[a-z][a-zA-Z]*}/{controller:[a-z][a-zA-Z]*}/{action:[a-z][a-zA-Z]*}', function ($module, $controller, $method) {
                 $appConfig = $this->di->get('appConfig');
                 $moduleList = $appConfig->get('moduleList');
                 if (!\in_array($module, $moduleList)) {
@@ -220,11 +259,11 @@ class MicroApplication
                 }
                 // initial moudle instance
                 $moduleInstance = $this->di->get($moduleNamespace.'\\Module');
-                // TODO add event
-                $success = $moduleInstance->init();
-                if (false === $success) {
-                    throw new Exception('module initial failue');
-                }
+                $this->di->set('module', $moduleInstance);
+                $moduleInstance->registerService(function (string $name) use ($module) {
+                    return require sprintf('var/config/%s/%s/%s.php', APP['env'], $module, $name);
+                });
+                $moduleInstance->registerEvent();
                 // init handler
                 $handlerInstance = $this->di->get($handlerClass);
                 if (!method_exists($handlerInstance, $method)) {

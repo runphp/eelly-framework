@@ -21,7 +21,14 @@ namespace Shadon\Mvc;
 interface ModuleDefinitionInterface
 {
     /**
-     * Initial module instance.
+     * Register module service.
+     *
+     * @param callable $moduleConfig
      */
-    public function init(): void;
+    public function registerService(callable $moduleConfig): void;
+
+    /**
+     * Register module event.
+     */
+    public function registerEvent(): void;
 }
