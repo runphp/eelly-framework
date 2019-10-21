@@ -203,7 +203,7 @@ class MicroApplication
         $this->di->set('response', $this->response = JsonResponse::create(null, Response::HTTP_OK, ['content-type' => 'application/json', 'Server' => self::SERVER_NAME]));
         $this->dispatcher = FastRoute\simpleDispatcher(function (FastRoute\RouteCollector $r): void {
             $r->addRoute('GET', '/', function () {
-                return 'Hello, I\'m Shadon (｡A｡)';
+                return 'Hello, I\'m '.self::SERVER_NAME;
             });
             $r->addRoute(['POST', 'GET'], '/{module:[a-z][a-zA-Z]*}/{controller:[a-z][a-zA-Z]*}/{action:[a-z][a-zA-Z]*}', function ($module, $controller, $method) {
                 $appConfig = $this->di->get('appConfig');
@@ -221,7 +221,7 @@ class MicroApplication
                 // initial moudle instance
                 $moduleInstance = $this->di->get($moduleNamespace.'\\Module');
                 // TODO add event
-                $success = $moduleInstance->initial();
+                $success = $moduleInstance->init();
                 if (false === $success) {
                     throw new Exception('module initial failue');
                 }

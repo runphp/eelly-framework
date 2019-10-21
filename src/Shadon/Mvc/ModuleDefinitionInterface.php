@@ -13,12 +13,15 @@ declare(strict_types=1);
 
 namespace Shadon\Mvc;
 
+/**
+ * Interface ModuleDefinitionInterface.
+ *
+ * @author hehui<runphp@qq.com>
+ */
 interface ModuleDefinitionInterface
 {
     /**
      * Initial module instance.
-     *
-     * @return bool
      */
-    public function initial(): bool;
+    public function init(): void;
 }
