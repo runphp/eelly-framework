@@ -13,7 +13,7 @@ declare(strict_types=1);
 
 namespace Shadon\Context;
 
-use DI\Annotation\Inject;
+use ReflectionMethod;
 use SplStack;
 
 /**
@@ -23,22 +23,30 @@ use SplStack;
  */
 class FpmContext implements ContextInterface
 {
+    use ContextTrait;
+
+    /**
+     * @var string
+     */
+    public $controller;
+
+    /**
+     * @var string
+     */
+    public $action;
     /**
      * @var string
      */
     private $moduleName;
+    /**
+     * @var ReflectionMethod
+     */
+    private $reflectionMethod;
 
     /**
      * @var array
      */
     private $params;
-
-    /**
-     * @Inject
-     *
-     * @var \DI\Container
-     */
-    private $di;
 
     /**
      * @var SplStack
@@ -66,6 +74,48 @@ class FpmContext implements ContextInterface
         $this->moduleName = $moduleName;
     }
 
+    /**
+     * @return string
+     */
+    public function getController(): string
+    {
+        return $this->controller;
+    }
+
+    /**
+     * @param string $controller
+     */
+    public function setController(string $controller): void
+    {
+        $this->controller = $controller;
+    }
+
+    /**
+     * @return string
+     */
+    public function getAction(): string
+    {
+        return $this->action;
+    }
+
+    /**
+     * @param string $action
+     */
+    public function setAction(string $action): void
+    {
+        $this->action = $action;
+    }
+
+    public function getReflectionMethod(): ReflectionMethod
+    {
+        return $this->reflectionMethod;
+    }
+
+    public function setReflectionMethod(ReflectionMethod $reflectionMethod): void
+    {
+        $this->reflectionMethod = $reflectionMethod;
+    }
+
     public function getParams(): array
     {
         return $this->params;
@@ -74,14 +124,6 @@ class FpmContext implements ContextInterface
     public function setParams(array $params): void
     {
         $this->params = $params;
-    }
-
-    /**
-     * @return \Di\Container
-     */
-    public function getDi(): \Di\Container
-    {
-        return $this->di;
     }
 
     public function push(callable $handler): void
@@ -94,10 +136,5 @@ class FpmContext implements ContextInterface
         $handler = $this->handlerStack->shift();
 
         return $handler($this);
-    }
-
-    public function moduleConfig($name)
-    {
-        return require sprintf('var/config/%s/%s/%s.php', APP['env'], $this->moduleName, $name);
     }
 }

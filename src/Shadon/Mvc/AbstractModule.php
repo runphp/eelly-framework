@@ -13,15 +13,29 @@ declare(strict_types=1);
 
 namespace Shadon\Mvc;
 
-use Phalcon\DiInterface as Di;
-use Phalcon\Events\Event;
-use Phalcon\Mvc\ModuleDefinitionInterface;
-use Shadon\Di\Injectable;
+use Shadon\Context\ContextInterface;
 
 /**
- * @author hehui<hehui@eelly.net>
+ * @author hehui<runphp@qq.com>
  */
 abstract class AbstractModule implements ModuleDefinitionInterface
 {
-  
+    /**
+     * @Inject
+     *
+     * @var ContextInterface
+     */
+    private $context;
+
+    /**
+     * Add handler.
+     *
+     * @param callable ...$handlers
+     */
+    public function addHandler(callable ...$handlers): void
+    {
+        foreach ($handlers as $handler) {
+            $this->context->push($handler);
+        }
+    }
 }

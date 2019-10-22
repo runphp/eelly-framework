@@ -234,7 +234,7 @@ class MicroApplication
             $r->addRoute('GET', '/', function () {
                 return 'Hello, I\'m '.self::SERVER_NAME;
             });
-            $r->addRoute('POST', '/{module:[a-z][a-zA-Z]*}/{controller:[a-z][a-zA-Z]*}/{action:[a-z][a-zA-Z]*}', function ($module, $controller, $method) {
+            $r->addRoute('POST', '/{module:[a-z][a-zA-Z]*}/{controller:[a-z][a-zA-Z]*}/{action:[a-z][a-zA-Z]*}', function ($module, $controller, $action) {
                 $appConfig = $this->di->get('appConfig');
                 $moduleList = $appConfig->get('moduleList');
                 if (!\in_array($module, $moduleList)) {
@@ -242,6 +242,8 @@ class MicroApplication
                 }
                 $context = $this->di->get(ContextInterface::class);
                 $context->setModuleName($module);
+                $context->setController($controller);
+                $context->setAction($action);
                 // loader module class
                 $moduleNamespace = APP['namespace'].'\\Module\\'.ucfirst($module);
                 $this->classLoader->addPsr4($moduleNamespace.'\\', 'src/Module/'.ucfirst($module.'/'));
@@ -252,10 +254,11 @@ class MicroApplication
                 // initial moudle instance
                 $moduleInstance = $this->di->get($moduleNamespace.'\\Module');
                 $moduleInstance->init();
-                // init handler
-                $handlerInstance = $this->di->get($handlerClass);
-                if (!method_exists($handlerInstance, $method)) {
-                    throw new NotFoundException(sprintf('handler method `%s` not found', $method));
+                // check class and method
+                try {
+                    $reflectionMethod = new \ReflectionMethod($handlerClass, $action);
+                } catch (\ReflectionException $e) {
+                    throw new NotFoundException(sprintf('handler method `%s` not found', $action));
                 }
                 if (!'json' == $this->request->getContentType()) {
                     throw new RequestException('bad request, content type must json');
@@ -264,8 +267,8 @@ class MicroApplication
                 if (JSON_ERROR_NONE !== json_last_error()) {
                     throw new RequestException('bad request, content must json');
                 }
-                $classMethod = new \ReflectionMethod($handlerClass, $method);
-                $parameters = $classMethod->getParameters();
+                $context->setReflectionMethod($reflectionMethod);
+                $parameters = $reflectionMethod->getParameters();
                 $params = [];
                 foreach ($parameters as $parameter) {
                     $paramName = $parameter->getName();
@@ -280,10 +283,12 @@ class MicroApplication
                     }
                 }
                 $context->setParams($params);
-                $handler = function (ContextInterface $context) use ($handlerInstance, $method) {
-                    return $handlerInstance->$method(...$context->getParams());
-                };
-                $context->push($handler);
+                $context->push(function (ContextInterface $context) {
+                    // init handler
+                    $reflectionMethod = $context->getReflectionMethod();
+
+                    return (new $reflectionMethod->class())->{$reflectionMethod->name}(...$context->getParams());
+                });
                 try {
                     return $context->next();
                 } catch (\TypeError $e) {

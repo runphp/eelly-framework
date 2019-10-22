@@ -13,6 +13,8 @@ declare(strict_types=1);
 
 namespace Shadon\Context;
 
+use ReflectionMethod;
+
 /**
  * Interface ContextInterface.
  *
@@ -24,13 +26,21 @@ interface ContextInterface
 
     public function setModuleName($moduleName): void;
 
-    public function moduleConfig($name);
+    public function getController(): string;
+
+    public function setController(string $controller): void;
+
+    public function getAction(): string;
+
+    public function setAction(string $action): void;
+
+    public function getReflectionMethod(): ReflectionMethod;
+
+    public function setReflectionMethod(ReflectionMethod $class): void;
 
     public function getParams(): array;
 
     public function setParams(array $params): void;
-
-    public function getDi(): \Di\Container;
 
     public function push(callable $handler);
 
