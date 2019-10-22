@@ -17,10 +17,11 @@ use Composer\Autoload\ClassLoader;
 use DI;
 use FastRoute;
 use Illuminate\Config\Repository;
-use Illuminate\Container\Container;
 use Illuminate\Database\Capsule\Manager as Capsule;
-use Illuminate\Events\Dispatcher;
 use MongoDB\BSON\ObjectId;
+use Psr\Cache\CacheItemPoolInterface;
+use Shadon\Context\ContextInterface;
+use Shadon\Context\FpmContext;
 use Shadon\Exception\ClientException;
 use Shadon\Exception\Exception;
 use Shadon\Exception\LogicException;
@@ -110,38 +111,25 @@ class MicroApplication
                 }),
             ],
             [
-                'createMysqlService' => DI\factory(function () {
-                    return function (array $config): Capsule {
-                        $capsule = new Capsule();
-                        $capsule->addConnection($config);
-                        $capsule->setEventDispatcher(new Dispatcher(new Container()));
-                        $capsule->setAsGlobal();
-                        $capsule->bootEloquent();
+                ContextInterface::class => DI\create(FpmContext::class),
+            ],
+            [
+                CacheItemPoolInterface::class => DI\factory(function (DI\Container $c): CacheItemPoolInterface {
+                    $context = $c->get(ContextInterface::class);
+                    $cacheConfig = $context->moduleConfig('cache');
+                    $redisClient = RedisAdapter::createConnection($cacheConfig['dsn'], $cacheConfig['options']);
 
-                        return $capsule;
-                    };
+                    return new RedisAdapter($redisClient, $cacheConfig['namespace'], $cacheConfig['defaultLifetime']);
                 }),
-                'createCacheService' => DI\factory(function (DI\Container $c) {
-                    return function (array $hosts, string $namespace) use ($c): RedisAdapter {
-                        $redisConfig = [
-                            'dsn'     => 'redis:?host['.implode(']&host[', $hosts).']&redis_cluster=1',
-                            'options' => [
-                                'compression'    => true,
-                                'lazy'           => true,
-                                'persistent'     => 0,
-                                'persistent_id'  => null,
-                                'tcp_keepalive'  => 0,
-                                'timeout'        => 10,
-                                'read_timeout'   => 10,
-                                'retry_interval' => 0,
-                            ],
-                        ];
-                        $redisClient = RedisAdapter::createConnection($redisConfig['dsn'], $redisConfig['options']);
-                        $cache = new RedisAdapter($redisClient, $namespace, 300);
-                        $c->set('cache', $cache);
+            ],
+            [
+                Capsule::class => DI\factory(function (DI\Container $c): Capsule {
+                    $context = $c->get(ContextInterface::class);
+                    $mysqlConfig = $context->moduleConfig('mysql');
+                    $capsule = new Capsule();
+                    $capsule->addConnection($mysqlConfig);
 
-                        return $cache;
-                    };
+                    return $capsule;
                 }),
             ]
          );
@@ -252,6 +240,8 @@ class MicroApplication
                 if (!\in_array($module, $moduleList)) {
                     throw new NotFoundException(sprintf('moudule `%s` not found', $module));
                 }
+                $context = $this->di->get(ContextInterface::class);
+                $context->setModuleName($module);
                 // loader module class
                 $moduleNamespace = APP['namespace'].'\\Module\\'.ucfirst($module);
                 $this->classLoader->addPsr4($moduleNamespace.'\\', 'src/Module/'.ucfirst($module.'/'));
@@ -261,11 +251,7 @@ class MicroApplication
                 }
                 // initial moudle instance
                 $moduleInstance = $this->di->get($moduleNamespace.'\\Module');
-                $this->di->set('module', $moduleInstance);
-                $moduleInstance->registerService(function (string $name) use ($module) {
-                    return require sprintf('var/config/%s/%s/%s.php', APP['env'], $module, $name);
-                });
-                $moduleInstance->registerEvent();
+                $moduleInstance->init();
                 // init handler
                 $handlerInstance = $this->di->get($handlerClass);
                 if (!method_exists($handlerInstance, $method)) {

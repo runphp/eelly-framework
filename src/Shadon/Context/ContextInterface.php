@@ -11,17 +11,18 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace Shadon\Mvc;
+namespace Shadon\Context;
 
 /**
- * Interface ModuleDefinitionInterface.
+ * Interface ContextInterface.
  *
  * @author hehui<runphp@qq.com>
  */
-interface ModuleDefinitionInterface
+interface ContextInterface
 {
-    /**
-     * Initial module.
-     */
-    public function init(): void;
+    public function getModuleName(): string;
+
+    public function setModuleName($moduleName): void;
+
+    public function moduleConfig($name);
 }
