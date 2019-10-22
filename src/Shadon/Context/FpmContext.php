@@ -13,6 +13,9 @@ declare(strict_types=1);
 
 namespace Shadon\Context;
 
+use DI\Annotation\Inject;
+use SplStack;
+
 /**
  * Class FpmContext.
  *
@@ -20,7 +23,32 @@ namespace Shadon\Context;
  */
 class FpmContext implements ContextInterface
 {
+    /**
+     * @var string
+     */
     private $moduleName;
+
+    /**
+     * @var array
+     */
+    private $params;
+
+    /**
+     * @Inject
+     *
+     * @var \DI\Container
+     */
+    private $di;
+
+    /**
+     * @var SplStack
+     */
+    private $handlerStack;
+
+    public function __construct()
+    {
+        $this->handlerStack = new SplStack();
+    }
 
     /**
      * @return mixed
@@ -36,6 +64,36 @@ class FpmContext implements ContextInterface
     public function setModuleName($moduleName): void
     {
         $this->moduleName = $moduleName;
+    }
+
+    public function getParams(): array
+    {
+        return $this->params;
+    }
+
+    public function setParams(array $params): void
+    {
+        $this->params = $params;
+    }
+
+    /**
+     * @return \Di\Container
+     */
+    public function getDi(): \Di\Container
+    {
+        return $this->di;
+    }
+
+    public function push(callable $handler): void
+    {
+        $this->handlerStack->push($handler);
+    }
+
+    public function next()
+    {
+        $handler = $this->handlerStack->shift();
+
+        return $handler($this);
     }
 
     public function moduleConfig($name)

@@ -76,7 +76,7 @@ class MicroApplication
     /**
      * @var callable
      */
-    private $transportFunc;
+    private $transportHandler;
 
     /**
      * reserved memory.
@@ -90,14 +90,14 @@ class MicroApplication
      *
      * @param string      $namespace
      * @param ClassLoader $classLoader
-     * @param callable    $transportFunc
+     * @param callable    $transportHandler
      *
      * @throws \Exception
      */
-    public function __construct(string $namespace, ClassLoader $classLoader, callable $transportFunc)
+    public function __construct(string $namespace, ClassLoader $classLoader, callable $transportHandler)
     {
         $this->classLoader = $classLoader;
-        $this->transportFunc = $transportFunc;
+        $this->transportHandler = $transportHandler;
         $this->initRuntime($namespace);
         $containerBuilder = new DI\ContainerBuilder();
         $containerBuilder->enableCompilation(ROOT_PATH.'/var/cache');
@@ -142,24 +142,24 @@ class MicroApplication
      */
     public function main(): int
     {
-        $requestId = (string) new ObjectId();
-        $transportFunc = $this->transportFunc;
+        $this->di->set('requestId', (string) new ObjectId());
+        $transportHandler = $this->transportHandler;
         // handler error
         error_reporting(E_ALL);
         ini_set('display_errors', '0');
         set_error_handler(function ($code, $message, $file = '', $line = 0, $context = []): void {
             throw new ServerException($message, Response::HTTP_INTERNAL_SERVER_ERROR, '服务器异常');
         }, E_ALL);
-        register_shutdown_function(function ($requestId, $transportFunc): void {
+        register_shutdown_function(function (DI\Container $di, $transportHandler): void {
             $this->reservedMemory = null;
             $lastError = error_get_last();
             // TODO debug file line
-            $returnData = $transportFunc($requestId, new ServerException($lastError['message']));
+            $returnData = $transportHandler($di, new ServerException($lastError['message']));
             $this->response->setStatusCode(Response::HTTP_INTERNAL_SERVER_ERROR);
             $this->response->setData($returnData);
             $this->response->send();
         // TOTO error log
-        }, $requestId, $transportFunc);
+        }, $this->di, $transportHandler);
         $this->reservedMemory = str_repeat('X', 20480);
 
         $routeInfo = $this->dispatcher->dispatch($this->request->getMethod(), $this->request->getPathInfo());
@@ -177,7 +177,7 @@ class MicroApplication
             $returnData = $e;
             $return = 1;
         }
-        $returnData = $transportFunc($requestId, $returnData);
+        $returnData = $transportHandler($this->di, $returnData);
         $this->response->setData($returnData);
         $this->response->send();
 
@@ -279,8 +279,13 @@ class MicroApplication
                         throw new RequestException(sprintf('bad request, param `%s` is required', $paramName));
                     }
                 }
+                $context->setParams($params);
+                $handler = function (ContextInterface $context) use ($handlerInstance, $method) {
+                    return $handlerInstance->$method(...$context->getParams());
+                };
+                $context->push($handler);
                 try {
-                    $return = $handlerInstance->$method(...$params);
+                    return $context->next();
                 } catch (\TypeError $e) {
                     throw new RequestException($e->getMessage());
                 } catch (\Throwable $e) {

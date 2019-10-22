@@ -25,4 +25,14 @@ interface ContextInterface
     public function setModuleName($moduleName): void;
 
     public function moduleConfig($name);
+
+    public function getParams(): array;
+
+    public function setParams(array $params): void;
+
+    public function getDi(): \Di\Container;
+
+    public function push(callable $handler);
+
+    public function next();
 }
