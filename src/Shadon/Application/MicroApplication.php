@@ -19,7 +19,10 @@ use FastRoute;
 use Illuminate\Config\Repository;
 use Illuminate\Database\Capsule\Manager as Capsule;
 use MongoDB\BSON\ObjectId;
+use Monolog\Handler\StreamHandler;
+use Monolog\Logger;
 use Psr\Cache\CacheItemPoolInterface;
+use Psr\Log\LoggerInterface;
 use Shadon\Context\ContextInterface;
 use Shadon\Context\FpmContext;
 use Shadon\Exception\ClientException;
@@ -111,6 +114,16 @@ class MicroApplication
                 }),
             ],
             [
+                'errorlogger' => DI\factory(function (DI\Container $c): LoggerInterface {
+                    $logger = new Logger(APP['namespace']);
+                    $stream = realpath($c->get('appConfig')->get('logPath')).'/app.'.date('Ymd').'.txt';
+                    $fileHandler = new StreamHandler($stream);
+                    $logger->pushHandler($fileHandler);
+
+                    return $logger;
+                }),
+            ],
+            [
                 ContextInterface::class => DI\create(FpmContext::class),
             ],
             [
@@ -153,12 +166,11 @@ class MicroApplication
         register_shutdown_function(function (DI\Container $di, $transportHandler): void {
             $this->reservedMemory = null;
             $lastError = error_get_last();
-            // TODO debug file line
             $returnData = $transportHandler($di, new ServerException($lastError['message']));
             $this->response->setStatusCode(Response::HTTP_INTERNAL_SERVER_ERROR);
             $this->response->setData($returnData);
             $this->response->send();
-        // TOTO error log
+            $di->get('errorlogger')->alert($lastError['message'], $lastError);
         }, $this->di, $transportHandler);
         $this->reservedMemory = str_repeat('X', 20480);
 
@@ -172,7 +184,14 @@ class MicroApplication
         } catch (Exception $e) {
             $this->response->setStatusCode($e->getCode());
             if (!$e instanceof ClientException) {
-                // TOTO error log
+                $this->di->get('errorLogger')->error($e->getMessage(), [
+                    'code'          => $e->getCode(),
+                    'message'       => $message,
+                    'class'         => \get_class($e),
+                    'file'          => $e->getFile(),
+                    'line'          => $e->getLine(),
+                    'traceAsString' => $e->getTrace(),
+                ]);
             }
             $returnData = $e;
             $return = 1;
