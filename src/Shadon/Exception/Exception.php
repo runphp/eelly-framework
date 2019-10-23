@@ -39,9 +39,9 @@ class Exception extends \Exception implements JsonSerializable
     /**
      * @return string
      */
-    public function getTips(): string
+    public function getHint(): string
     {
-        return $this->tips;
+        return $this->hint;
     }
 
     public function jsonSerialize()
