@@ -304,11 +304,14 @@ class MicroApplication
                     }
                 }
                 $context->setParams($params);
+
                 $context->push(function (ContextInterface $context) {
                     // init handler
                     $reflectionMethod = $context->getReflectionMethod();
+                    $hander = $this->di->get($reflectionMethod->class);
+                    $context->setHander($hander);
 
-                    return (new $reflectionMethod->class())->{$reflectionMethod->name}(...$context->getParams());
+                    return $hander->{$reflectionMethod->name}(...$context->getParams());
                 });
                 try {
                     return $context->next();
