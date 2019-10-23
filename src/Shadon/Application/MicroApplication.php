@@ -114,7 +114,7 @@ class MicroApplication
                 }),
             ],
             [
-                'errorlogger' => DI\factory(function (DI\Container $c): LoggerInterface {
+                'errorLogger' => DI\factory(function (DI\Container $c): LoggerInterface {
                     $logger = new Logger(APP['namespace']);
                     $stream = realpath($c->get('appConfig')->get('logPath')).'/app.'.date('Ymd').'.txt';
                     $fileHandler = new StreamHandler($stream);
@@ -176,17 +176,17 @@ class MicroApplication
 
         $routeInfo = $this->dispatcher->dispatch($this->request->getMethod(), $this->request->getPathInfo());
 
+        $return = 0;
         try {
             $returnData = $this->handleRouteInfo($routeInfo);
         } catch (LogicException $e) {
             $returnData = $e;
-            $return = 0;
         } catch (Exception $e) {
             $this->response->setStatusCode($e->getCode());
             if (!$e instanceof ClientException) {
                 $this->di->get('errorLogger')->error($e->getMessage(), [
                     'code'          => $e->getCode(),
-                    'message'       => $message,
+                    'message'       => $e->getMessage(),
                     'class'         => \get_class($e),
                     'file'          => $e->getFile(),
                     'line'          => $e->getLine(),
