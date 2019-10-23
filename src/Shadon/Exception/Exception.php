@@ -28,12 +28,12 @@ class Exception extends \Exception implements JsonSerializable
      *
      * @var string
      */
-    protected $tips;
+    protected $hint;
 
-    public function __construct($message = 'uncatched exception', $code = 500, $tips = '服务器异常', Throwable $previous = null)
+    public function __construct($message = 'uncatched exception', $code = 500, $hint = '服务器异常', Throwable $previous = null)
     {
         parent::__construct($message, $code, $previous);
-        $this->tips = $tips;
+        $this->hint = $hint;
     }
 
     /**
@@ -49,7 +49,7 @@ class Exception extends \Exception implements JsonSerializable
         return [
             'exception' => \get_class($this),
             'message'   => $this->message,
-            'tips'      => $this->tips,
+            'tips'      => $this->hint,
             'code'      => $this->code,
             'file'      => $this->file,
             'line'      => $this->line,

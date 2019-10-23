@@ -22,8 +22,8 @@ use Throwable;
  */
 class LogicException extends Exception
 {
-    public function __construct($message = '业务逻辑异常', $code = 10001, $tips = '业务逻辑异常', Throwable $previous = null)
+    public function __construct($message = '业务逻辑异常', $code = 10001, $hint = '业务逻辑异常', Throwable $previous = null)
     {
-        parent::__construct($message, $code, $tips, $previous);
+        parent::__construct($message, $code, $hint, $previous);
     }
 }

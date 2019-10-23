@@ -22,8 +22,8 @@ use Throwable;
  */
 class MethodNotAllowedException extends ClientException
 {
-    public function __construct($message = 'method not allowed', $tips = 'method not allowed', Throwable $previous = null)
+    public function __construct($message = 'method not allowed', $hint = 'method not allowed', Throwable $previous = null)
     {
-        parent::__construct($message, 405, $tips, $previous);
+        parent::__construct($message, 405, $hint, $previous);
     }
 }

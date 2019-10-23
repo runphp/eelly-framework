@@ -22,8 +22,8 @@ use Throwable;
  */
 class NotFoundException extends ClientException
 {
-    public function __construct($message = 'not found', $tips = 'not found', Throwable $previous = null)
+    public function __construct($message = 'not found', $hint = 'not found', Throwable $previous = null)
     {
-        parent::__construct($message, 404, $tips, $previous);
+        parent::__construct($message, 404, $hint, $previous);
     }
 }

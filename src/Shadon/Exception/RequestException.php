@@ -22,8 +22,8 @@ use Throwable;
  */
 class RequestException extends ClientException
 {
-    public function __construct($message = 'bad request', $tips = 'bad request', Throwable $previous = null)
+    public function __construct($message = 'bad request', $hint = 'bad request', Throwable $previous = null)
     {
-        parent::__construct($message, 400, $tips, $previous);
+        parent::__construct($message, 400, $hint, $previous);
     }
 }
