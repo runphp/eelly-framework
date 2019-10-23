@@ -116,7 +116,7 @@ class MicroApplication
             [
                 'errorLogger' => DI\factory(function (DI\Container $c): LoggerInterface {
                     $logger = new Logger(APP['namespace']);
-                    $stream = realpath($c->get('appConfig')->get('logPath')).'/app.'.date('Ymd').'.txt';
+                    $stream = ROOT_PATH.'/'.$c->get('appConfig')->get('logPath').'/app.'.date('Ymd').'.txt';
                     $fileHandler = new StreamHandler($stream);
                     $logger->pushHandler($fileHandler);
 
@@ -249,12 +249,15 @@ class MicroApplication
     private function initService(): void
     {
         $this->di->set('request', $this->request = Request::createFromGlobals());
+        $context = $this->di->get(ContextInterface::class);
+        $context->setTpl((int) $this->request->get('tpl', 0));
+
         $this->di->set('response', $this->response = JsonResponse::create(null, Response::HTTP_OK, ['content-type' => 'application/json', 'Server' => self::SERVER_NAME]));
         $this->dispatcher = FastRoute\simpleDispatcher(function (FastRoute\RouteCollector $r): void {
             $r->addRoute('GET', '/', function () {
                 return 'Hello, I\'m '.self::SERVER_NAME;
             });
-            $r->addRoute('POST', '/{module:[a-z][a-zA-Z]*}/{controller:[a-z][a-zA-Z]*}/{action:[a-z][a-zA-Z]*}', function ($module, $controller, $action) {
+            $r->addRoute('prod' == APP['env'] ? 'POST' : ['GET', 'POST'], '/{module:[a-z][a-zA-Z]*}/{controller:[a-z][a-zA-Z]*}/{action:[a-z][a-zA-Z]*}', function ($module, $controller, $action) {
                 $appConfig = $this->di->get('appConfig');
                 $moduleList = $appConfig->get('moduleList');
                 if (!\in_array($module, $moduleList)) {
@@ -280,16 +283,18 @@ class MicroApplication
                 } catch (\ReflectionException $e) {
                     throw new NotFoundException(sprintf('handler method `%s` not found', $action));
                 }
-                $context->setTpl((int) $this->request->get('tpl', 0));
-                if (!'json' == $this->request->getContentType()) {
-                    throw new RequestException('bad request, content type must json');
-                }
-                $data = json_decode($this->request->getContent(), true);
-                if (JSON_ERROR_NONE !== json_last_error()) {
-                    throw new RequestException('bad request, content must json');
-                }
                 $context->setReflectionMethod($reflectionMethod);
                 $parameters = $reflectionMethod->getParameters();
+                $paramNum = $reflectionMethod->getNumberOfParameters();
+                if (0 < $paramNum) {
+                    if (!'json' == $this->request->getContentType()) {
+                        throw new RequestException('bad request, content type must json');
+                    }
+                    $data = json_decode($this->request->getContent(), true);
+                    if (JSON_ERROR_NONE !== json_last_error()) {
+                        throw new RequestException('bad request, content must json');
+                    }
+                }
                 $params = [];
                 foreach ($parameters as $parameter) {
                     $paramName = $parameter->getName();
