@@ -26,7 +26,7 @@
 		"guzzlehttp/guzzle": "^6.2.3",
 		"illuminate/config": "^6.3.0",
 		"illuminate/database": "^6.3.0",
-		"illuminate/event": "^6.3.0",
+		"illuminate/events": "^6.3.0",
 		"illuminate/pagination": "^6.3.0",
 		"league/route": "^4.3.1",
 		"mongodb/mongodb": "^1.5.0",
