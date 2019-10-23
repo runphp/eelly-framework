@@ -42,6 +42,14 @@ interface ContextInterface
 
     public function setParams(array $params): void;
 
+    public function getTpl(): int;
+
+    public function getRequestId(): string;
+
+    public function setRequestId(string $requestId): void;
+
+    public function setTpl(int $int): void;
+
     public function push(callable $handler);
 
     public function next();

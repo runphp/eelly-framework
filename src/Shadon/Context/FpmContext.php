@@ -49,6 +49,16 @@ class FpmContext implements ContextInterface
     private $params;
 
     /**
+     * @var int
+     */
+    private $tpl;
+
+    /**
+     * @var string
+     */
+    private $requestId;
+
+    /**
      * @var SplStack
      */
     private $handlerStack;
@@ -124,6 +134,38 @@ class FpmContext implements ContextInterface
     public function setParams(array $params): void
     {
         $this->params = $params;
+    }
+
+    /**
+     * @return int
+     */
+    public function getTpl(): int
+    {
+        return $this->tpl;
+    }
+
+    /**
+     * @param int $tpl
+     */
+    public function setTpl(int $tpl): void
+    {
+        $this->tpl = $tpl;
+    }
+
+    /**
+     * @return string
+     */
+    public function getRequestId(): string
+    {
+        return $this->requestId;
+    }
+
+    /**
+     * @param string $requestId
+     */
+    public function setRequestId(string $requestId): void
+    {
+        $this->requestId = $requestId;
     }
 
     public function push(callable $handler): void

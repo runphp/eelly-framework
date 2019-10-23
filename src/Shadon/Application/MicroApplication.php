@@ -155,7 +155,8 @@ class MicroApplication
      */
     public function main(): int
     {
-        $this->di->set('requestId', (string) new ObjectId());
+        $context = $this->di->get(ContextInterface::class);
+        $context->setRequestId((string) new ObjectId());
         $transportHandler = $this->transportHandler;
         // handler error
         error_reporting(E_ALL);
@@ -166,7 +167,7 @@ class MicroApplication
         register_shutdown_function(function (DI\Container $di, $transportHandler): void {
             $this->reservedMemory = null;
             $lastError = error_get_last();
-            $returnData = $transportHandler($di, new ServerException($lastError['message']));
+            $returnData = $transportHandler($di->get(ContextInterface::class), new ServerException($lastError['message']));
             $this->response->setStatusCode(Response::HTTP_INTERNAL_SERVER_ERROR);
             $this->response->setData($returnData);
             $this->response->send();
@@ -196,7 +197,7 @@ class MicroApplication
             $returnData = $e;
             $return = 1;
         }
-        $returnData = $transportHandler($this->di, $returnData);
+        $returnData = $transportHandler($context, $returnData);
         $this->response->setData($returnData);
         $this->response->send();
 
@@ -279,6 +280,7 @@ class MicroApplication
                 } catch (\ReflectionException $e) {
                     throw new NotFoundException(sprintf('handler method `%s` not found', $action));
                 }
+                $context->setTpl((int) $this->request->get('tpl', 0));
                 if (!'json' == $this->request->getContentType()) {
                     throw new RequestException('bad request, content type must json');
                 }
