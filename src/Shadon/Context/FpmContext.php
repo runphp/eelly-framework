@@ -172,6 +172,7 @@ class FpmContext implements ContextInterface
         // ready for response
         /* @var Dispatcher $dispatcher */
         $dispatcher = $this->get(Dispatcher::class);
+        //$dispatcher->listen(HandleJsonResponse::class, $this->get('responseHandler'));
         $response = $this->get(Response::class);
         $request = $this->get(Request::class);
         $data = $dispatcher->dispatch(new HandleJsonResponse($response, $data, $this->get('requestId'), (int) $request->get('tpl', 0)));

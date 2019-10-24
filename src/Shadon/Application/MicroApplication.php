@@ -143,14 +143,15 @@ class MicroApplication
                     return Request::createFromGlobals();
                 }),
             ],
-
+            // response handler
+            [
+                'responseHandler' => $this->responseHandler,
+            ],
             // response
             [
                 Response::class => DI\factory(function (DI\Container $c): Response {
-                    $dispatcher = $c->get(DispatcherContract::class);
-                    $dispatcher->listen(HandleJsonResponse::class, $this->responseHandler);
-
-                    return JsonResponse::create(null, Response::HTTP_OK, ['content-type' => 'application/json', 'Server' => self::SERVER_NAME]);
+                    //$c->get(DispatcherContract::class)->listen(HandleJsonResponse::class, $c->get('responseHandler'));
+                    return JsonResponse::create(null, Response::HTTP_OK, ['content-type' => 'application/json', 'Server' => APP['serverName']]);
                 }),
             ],
             // cache
