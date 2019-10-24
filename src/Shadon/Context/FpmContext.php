@@ -18,15 +18,12 @@ use DI\Container;
 use FastRoute;
 use Illuminate\Contracts\Events\Dispatcher;
 use ReflectionMethod;
-use Shadon\Events\HandleJsonResponse;
-use Shadon\Exception\Exception;
+use Shadon\Events\BeforeResponseEvent;
 use Shadon\Exception\LogicException;
 use Shadon\Exception\MethodNotAllowedException;
 use Shadon\Exception\NotFoundException;
 use Shadon\Exception\RequestException;
-use Shadon\Exception\ServerException;
 use SplStack;
-use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 
 /**
@@ -42,6 +39,13 @@ class FpmContext implements ContextInterface
      * @var Container
      */
     private $di;
+
+    /**
+     * map.
+     *
+     * @var array
+     */
+    private $entries = [];
 
     /**
      * @var SplStack
@@ -67,15 +71,19 @@ class FpmContext implements ContextInterface
 
     public function get($name)
     {
-        return $this->di->get($name);
+        if (isset($this->entries[$name])) {
+            return $this->entries[$name];
+        } else {
+            return $this->di->get($name);
+        }
     }
 
     public function set(string $name, $value): void
     {
-        $this->di->set($name, $value);
+        $this->entries[$name] = $value;
     }
 
-    public function routeDefinitionCallback()
+    public function routeDefinitionCallback(): callable
     {
         return function (FastRoute\RouteCollector $routeCollector): void {
             $routeCollector->addRoute('GET', '/', function () {
@@ -143,12 +151,6 @@ class FpmContext implements ContextInterface
                     return $this->next();
                 } catch (\TypeError $e) {
                     throw new RequestException($e->getMessage());
-                } catch (\Throwable $e) {
-                    if ($e instanceof Exception) {
-                        throw $e;
-                    } else {
-                        throw new ServerException($e->getMessage(), Response::HTTP_INTERNAL_SERVER_ERROR, '服务器异常', $e);
-                    }
                 }
             });
         };
@@ -166,16 +168,12 @@ class FpmContext implements ContextInterface
             $data = new NotFoundException();
         } elseif (FastRoute\Dispatcher::METHOD_NOT_ALLOWED == $routeInfo[0]) {
             $data = new MethodNotAllowedException();
-        } else {
-            $data = new Exception('未知的路由异常');
         }
         // ready for response
         /* @var Dispatcher $dispatcher */
         $dispatcher = $this->get(Dispatcher::class);
-        //$dispatcher->listen(HandleJsonResponse::class, $this->get('responseHandler'));
         $response = $this->get(Response::class);
-        $request = $this->get(Request::class);
-        $data = $dispatcher->dispatch(new HandleJsonResponse($response, $data, $this->get('requestId'), (int) $request->get('tpl', 0)));
+        $data = $dispatcher->dispatch(new BeforeResponseEvent($this, $data));
         $response->setData($data);
 
         return $response;
