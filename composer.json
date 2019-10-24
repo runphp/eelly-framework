@@ -45,7 +45,10 @@
 	"autoload": {
 		"psr-4": {
 			"Shadon\\": "src/Shadon/"
-		}
+		},
+		"files": [
+			"src/Shadon/functions_include.php"
+		]
 	},
 	"extra": {
 		"branch-alias": {

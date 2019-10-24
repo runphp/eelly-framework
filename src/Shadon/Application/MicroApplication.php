@@ -17,7 +17,9 @@ use Composer\Autoload\ClassLoader;
 use DI;
 use FastRoute;
 use Illuminate\Config\Repository;
+use Illuminate\Contracts\Events\Dispatcher as DispatcherContract;
 use Illuminate\Database\Capsule\Manager as Capsule;
+use Illuminate\Events\Dispatcher;
 use MongoDB\BSON\ObjectId;
 use Monolog\Handler\StreamHandler;
 use Monolog\Logger;
@@ -25,13 +27,8 @@ use Psr\Cache\CacheItemPoolInterface;
 use Psr\Log\LoggerInterface;
 use Shadon\Context\ContextInterface;
 use Shadon\Context\FpmContext;
-use Shadon\Exception\ClientException;
-use Shadon\Exception\Exception;
-use Shadon\Exception\LogicException;
-use Shadon\Exception\MethodNotAllowedException;
-use Shadon\Exception\NotFoundException;
-use Shadon\Exception\RequestException;
-use Shadon\Exception\ServerException;
+use Shadon\Events\HandleJsonResponse;
+use function Shadon\Helper\realpath;
 use Symfony\Component\Cache\Adapter\RedisAdapter;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -57,21 +54,6 @@ class MicroApplication
     private $di;
 
     /**
-     * @var Request
-     */
-    private $request;
-
-    /**
-     * @var FastRoute\Dispatcher\GroupCountBased
-     */
-    private $dispatcher;
-
-    /**
-     * @var JsonResponse
-     */
-    private $response;
-
-    /**
      * @var ClassLoader
      */
     private $classLoader;
@@ -79,7 +61,7 @@ class MicroApplication
     /**
      * @var callable
      */
-    private $transportHandler;
+    private $responseHandler;
 
     /**
      * reserved memory.
@@ -93,39 +75,85 @@ class MicroApplication
      *
      * @param string      $namespace
      * @param ClassLoader $classLoader
-     * @param callable    $transportHandler
+     * @param callable    $responseHandler
      *
      * @throws \Exception
      */
-    public function __construct(string $namespace, ClassLoader $classLoader, callable $transportHandler)
+    public function __construct(string $namespace, ClassLoader $classLoader, string $rootPath, callable $responseHandler)
     {
+        $this->initRuntime($namespace, $rootPath);
         $this->classLoader = $classLoader;
-        $this->transportHandler = $transportHandler;
-        $this->initRuntime($namespace);
+        $this->responseHandler = $responseHandler;
+        $this->registerService();
+    }
+
+    /**
+     * @return int
+     */
+    public function main()
+    {
+        /* @var FpmContext $context */
+        $context = $this->di->get(ContextInterface::class);
+        $request = $context->get(Request::class);
+        $dispatcher = FastRoute\simpleDispatcher($context->routeDefinitionCallback());
+        $routeInfo = $dispatcher->dispatch($request->getMethod(), $request->getPathInfo());
+        $context->handle($routeInfo)->send();
+    }
+
+    private function registerService(): void
+    {
         $containerBuilder = new DI\ContainerBuilder();
-        $containerBuilder->enableCompilation(ROOT_PATH.'/var/cache');
-        $containerBuilder->writeProxiesToFile(true, ROOT_PATH.'/var/proxies');
+        $containerBuilder->enableCompilation(realpath('var/cache'));
+        $containerBuilder->writeProxiesToFile(true, realpath('var/cache'));
         $containerBuilder->useAutowiring(true);
         $containerBuilder->useAnnotations(true);
         $containerBuilder->addDefinitions(
+            // loader
             [
-                'appConfig'=> DI\factory(function () {
-                    return new Repository(require 'var/config/'.APP['env'].'/config.php');
+                ClassLoader::class => $this->classLoader,
+            ],
+            // request ID
+            [
+                'requestId' => (string) new ObjectId(),
+            ],
+            // config
+            [
+                'config'=> DI\factory(function (): Repository {
+                    return new Repository(require realpath(realpath('var/config/'.APP['env'].'/config.php')));
                 }),
             ],
+            // log
             [
-                'errorLogger' => DI\factory(function (DI\Container $c): LoggerInterface {
+                LoggerInterface::class => DI\factory(function (DI\Container $c): LoggerInterface {
                     $logger = new Logger(APP['namespace']);
-                    $stream = ROOT_PATH.'/'.$c->get('appConfig')->get('logPath').'/app.'.date('Ymd').'.txt';
+                    $stream = realpath($c->get('config')->get('logPath')).'/app.'.date('Ymd').'.txt';
                     $fileHandler = new StreamHandler($stream);
                     $logger->pushHandler($fileHandler);
 
                     return $logger;
                 }),
             ],
+            // context
             [
-                ContextInterface::class => DI\create(FpmContext::class),
+                ContextInterface::class => DI\create(FpmContext::class)->property('di', Di\get(DI\Container::class)),
             ],
+            // request
+            [
+                Request::class => DI\factory(function (DI\Container $c): Request {
+                    return Request::createFromGlobals();
+                }),
+            ],
+
+            // response
+            [
+                Response::class => DI\factory(function (DI\Container $c): Response {
+                    $dispatcher = $c->get(DispatcherContract::class);
+                    $dispatcher->listen(HandleJsonResponse::class, $this->responseHandler);
+
+                    return JsonResponse::create(null, Response::HTTP_OK, ['content-type' => 'application/json', 'Server' => self::SERVER_NAME]);
+                }),
+            ],
+            // cache
             [
                 CacheItemPoolInterface::class => DI\factory(function (DI\Container $c): CacheItemPoolInterface {
                     $context = $c->get(ContextInterface::class);
@@ -135,6 +163,11 @@ class MicroApplication
                     return new RedisAdapter($redisClient, $cacheConfig['namespace'], $cacheConfig['defaultLifetime']);
                 }),
             ],
+            // events
+            [
+                DispatcherContract::class  => DI\create(Dispatcher::class),
+            ],
+            // mysql
             [
                 Capsule::class => DI\factory(function (DI\Container $c): Capsule {
                     $context = $c->get(ContextInterface::class);
@@ -145,87 +178,17 @@ class MicroApplication
                     return $capsule;
                 }),
             ]
-         );
+        );
         $this->di = $containerBuilder->build();
-        $this->initService();
-    }
-
-    /**
-     * @return int
-     */
-    public function main(): int
-    {
-        $context = $this->di->get(ContextInterface::class);
-        $context->setRequestId((string) new ObjectId());
-        $transportHandler = $this->transportHandler;
-        // handler error
-        error_reporting(E_ALL);
-        ini_set('display_errors', '0');
-        set_error_handler(function ($code, $message, $file = '', $line = 0, $context = []): void {
-            throw new ServerException($message, Response::HTTP_INTERNAL_SERVER_ERROR, '服务器异常');
-        }, E_ALL);
-        register_shutdown_function(function (DI\Container $di, $transportHandler): void {
-            $this->reservedMemory = null;
-            $lastError = error_get_last();
-            $returnData = $transportHandler($di->get(ContextInterface::class), new ServerException($lastError['message']));
-            $this->response->setStatusCode(Response::HTTP_INTERNAL_SERVER_ERROR);
-            $this->response->setData($returnData);
-            $this->response->send();
-            $di->get('errorlogger')->alert($lastError['message'], $lastError);
-        }, $this->di, $transportHandler);
-        $this->reservedMemory = str_repeat('X', 20480);
-
-        $routeInfo = $this->dispatcher->dispatch($this->request->getMethod(), $this->request->getPathInfo());
-
-        $return = 0;
-        try {
-            $returnData = $this->handleRouteInfo($routeInfo);
-        } catch (LogicException $e) {
-            $returnData = $e;
-        } catch (Exception $e) {
-            $this->response->setStatusCode($e->getCode());
-            if (!$e instanceof ClientException) {
-                $this->di->get('errorLogger')->error($e->getMessage(), [
-                    'code'          => $e->getCode(),
-                    'message'       => $e->getMessage(),
-                    'class'         => \get_class($e),
-                    'file'          => $e->getFile(),
-                    'line'          => $e->getLine(),
-                    'traceAsString' => $e->getTrace(),
-                ]);
-            }
-            $returnData = $e;
-            $return = 1;
-        }
-        $returnData = $transportHandler($context, $returnData);
-        $this->response->setData($returnData);
-        $this->response->send();
-
-        return $return;
-    }
-
-    private function handleRouteInfo(array $routeInfo)
-    {
-        switch ($routeInfo[0]) {
-            case FastRoute\Dispatcher::NOT_FOUND:
-                throw new NotFoundException();
-            case FastRoute\Dispatcher::METHOD_NOT_ALLOWED:
-                throw new MethodNotAllowedException();
-            case FastRoute\Dispatcher::FOUND: // 找到对应的方法
-                $handler = $routeInfo[1]; // 获得处理函数
-                $vars = $routeInfo[2]; // 获取请求参数
-                $returnData = $handler(...array_values($vars));
-        }
-
-        return $returnData;
     }
 
     /**
      * @param string $namespace
+     * @param string $rootPath
      *
      * @throws \Exception
      */
-    private function initRuntime(string $namespace): void
+    private function initRuntime(string $namespace, string $rootPath): void
     {
         // created default .env
         if (!file_exists('.env')) {
@@ -240,98 +203,11 @@ class MicroApplication
         $appEnv = getenv('APP_ENV');
         $appKey = getenv('APP_KEY');
         \define('APP', [
-            'namespace'  => $namespace,
             'env'        => $appEnv,
             'key'        => $appKey,
+            'namespace'  => $namespace,
+            'rootPath'   => $rootPath,
+            'serverName' => self::SERVER_NAME,
          ]);
-    }
-
-    private function initService(): void
-    {
-        $this->di->set('request', $this->request = Request::createFromGlobals());
-        $context = $this->di->get(ContextInterface::class);
-        $context->setTpl((int) $this->request->get('tpl', 0));
-
-        $this->di->set('response', $this->response = JsonResponse::create(null, Response::HTTP_OK, ['content-type' => 'application/json', 'Server' => self::SERVER_NAME]));
-        $this->dispatcher = FastRoute\simpleDispatcher(function (FastRoute\RouteCollector $r): void {
-            $r->addRoute('GET', '/', function () {
-                return 'Hello, I\'m '.self::SERVER_NAME;
-            });
-            $r->addRoute('prod' == APP['env'] ? 'POST' : ['GET', 'POST'], '/{module:[a-z][a-zA-Z]*}/{controller:[a-z][a-zA-Z]*}/{action:[a-z][a-zA-Z]*}', function ($module, $controller, $action) {
-                $appConfig = $this->di->get('appConfig');
-                $moduleList = $appConfig->get('moduleList');
-                if (!\in_array($module, $moduleList)) {
-                    throw new NotFoundException(sprintf('moudule `%s` not found', $module));
-                }
-                $context = $this->di->get(ContextInterface::class);
-                $context->setModuleName($module);
-                $context->setController($controller);
-                $context->setAction($action);
-                // loader module class
-                $moduleNamespace = APP['namespace'].'\\Module\\'.ucfirst($module);
-                $this->classLoader->addPsr4($moduleNamespace.'\\', 'src/Module/'.ucfirst($module.'/'));
-                $handlerClass = $moduleNamespace.'\\Logic\\'.ucfirst($controller).'Logic';
-                if (!class_exists($handlerClass)) {
-                    throw new NotFoundException(sprintf('handler `%s` not found', $controller));
-                }
-                // initial moudle instance
-                $moduleInstance = $this->di->get($moduleNamespace.'\\Module');
-                $moduleInstance->init();
-                // check class and method
-                try {
-                    $reflectionMethod = new \ReflectionMethod($handlerClass, $action);
-                } catch (\ReflectionException $e) {
-                    throw new NotFoundException(sprintf('handler method `%s` not found', $action));
-                }
-                $context->setReflectionMethod($reflectionMethod);
-                $parameters = $reflectionMethod->getParameters();
-                $paramNum = $reflectionMethod->getNumberOfParameters();
-                if (0 < $paramNum) {
-                    if (!'json' == $this->request->getContentType()) {
-                        throw new RequestException('bad request, content type must json');
-                    }
-                    $data = json_decode($this->request->getContent(), true);
-                    if (JSON_ERROR_NONE !== json_last_error()) {
-                        throw new RequestException('bad request, content must json');
-                    }
-                }
-                $params = [];
-                foreach ($parameters as $parameter) {
-                    $paramName = $parameter->getName();
-                    if (isset($data[$paramName])) {
-                        // exist
-                        $params[] = $data[$paramName];
-                    } elseif ($parameter->isDefaultValueAvailable()) {
-                        // has default
-                        $params[] = $parameter->getDefaultValue();
-                    } else {
-                        throw new RequestException(sprintf('bad request, param `%s` is required', $paramName));
-                    }
-                }
-                $context->setParams($params);
-
-                $context->push(function (ContextInterface $context) {
-                    // init handler
-                    $reflectionMethod = $context->getReflectionMethod();
-                    $hander = $this->di->get($reflectionMethod->class);
-                    $context->setHander($hander);
-
-                    return $hander->{$reflectionMethod->name}(...$context->getParams());
-                });
-                try {
-                    return $context->next();
-                } catch (\TypeError $e) {
-                    throw new RequestException($e->getMessage());
-                } catch (\Throwable $e) {
-                    if ($e instanceof Exception) {
-                        throw $e;
-                    } else {
-                        throw new ServerException($e->getMessage(), Response::HTTP_INTERNAL_SERVER_ERROR, '服务器异常', $e);
-                    }
-                }
-
-                return $return;
-            });
-        });
     }
 }

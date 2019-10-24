@@ -11,12 +11,4 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace Shadon\Context;
-
-trait ContextTrait
-{
-    public function moduleConfig($name)
-    {
-        return require sprintf('var/config/%s/%s/%s.php', APP['env'], $this->get('module'), $name);
-    }
-}
+require __DIR__.'/Helper/functions.php';

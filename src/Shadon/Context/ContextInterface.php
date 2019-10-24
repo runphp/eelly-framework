@@ -22,37 +22,37 @@ use ReflectionMethod;
  */
 interface ContextInterface
 {
-    public function getModuleName(): string;
-
-    public function setModuleName($moduleName): void;
-
-    public function getController(): string;
-
-    public function setController(string $controller): void;
-
-    public function getAction(): string;
-
-    public function setAction(string $action): void;
-
-    public function getReflectionMethod(): ReflectionMethod;
-
-    public function setReflectionMethod(ReflectionMethod $class): void;
-
-    public function getParams(): array;
-
-    public function setParams(array $params): void;
-
-    public function getRequestId(): string;
-
-    public function setRequestId(string $requestId): void;
-
-    public function getTpl(): int;
-
-    public function setTpl(int $int): void;
-
-    public function getHander();
-
-    public function setHander($hander): void;
+//    public function getModuleName(): string;
+//
+//    public function setModuleName($moduleName): void;
+//
+//    public function getController(): string;
+//
+//    public function setController(string $controller): void;
+//
+//    public function getAction(): string;
+//
+//    public function setAction(string $action): void;
+//
+//    public function getReflectionMethod(): ReflectionMethod;
+//
+//    public function setReflectionMethod(ReflectionMethod $class): void;
+//
+//    public function getParams(): array;
+//
+//    public function setParams(array $params): void;
+//
+//    public function getRequestId(): string;
+//
+//    public function setRequestId(string $requestId): void;
+//
+//    public function getTpl(): int;
+//
+//    public function setTpl(int $int): void;
+//
+//    public function getHander();
+//
+//    public function setHander($hander): void;
 
     public function push(callable $handler);
 
