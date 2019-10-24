@@ -59,7 +59,6 @@ class FpmApplication
         $request = $context->get(Request::class);
         $dispatcher = FastRoute\simpleDispatcher($context->routeDefinitionCallback());
         $routeInfo = $dispatcher->dispatch($request->getMethod(), $request->getPathInfo());
-        dd($this->di);
         $context->handle($routeInfo)->send();
     }
 
