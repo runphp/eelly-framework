@@ -15,6 +15,11 @@ namespace Shadon\Exception;
 
 use Symfony\Component\Debug\Exception\FlattenException as SymfonyException;
 
+/**
+ * Class FlattenException.
+ *
+ * @author hehui<runphp@qq.com>
+ */
 class FlattenException extends SymfonyException
 {
     /**

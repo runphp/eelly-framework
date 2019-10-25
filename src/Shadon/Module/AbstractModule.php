@@ -11,11 +11,13 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace Shadon\Mvc;
+namespace Shadon\Module;
 
 use Shadon\Context\ContextInterface;
 
 /**
+ * Class AbstractModule.
+ *
  * @author hehui<runphp@qq.com>
  */
 abstract class AbstractModule implements ModuleDefinitionInterface

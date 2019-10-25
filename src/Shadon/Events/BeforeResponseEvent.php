@@ -15,6 +15,11 @@ namespace Shadon\Events;
 
 use Shadon\Context\ContextInterface;
 
+/**
+ * Class BeforeResponseEvent.
+ *
+ * @author hehui<runphp@qq.com>
+ */
 class BeforeResponseEvent
 {
     /**

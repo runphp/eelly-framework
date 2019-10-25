@@ -13,6 +13,11 @@ declare(strict_types=1);
 
 namespace Shadon\Context;
 
+/**
+ * Trait ContextTrait.
+ *
+ * @author hehui<runphp@qq.com>
+ */
 trait ContextTrait
 {
     public function moduleConfig($name)
