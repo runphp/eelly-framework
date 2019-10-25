@@ -6,15 +6,13 @@
 
 ## About Shadon framework
 
-Shadon framework is developed by php7.1, phalcon3 swoole symfony and so on. It brings you a new experience of modern PHP development, and the first choice for large-scale project development.
+Shadon framework is developed by php7.3, php-di, fastroute, swoole, symfony and so on. It brings you a new experience of modern PHP development, and the first choice for large-scale project development.
 
 ## Require
 
-PHP_VERSION = 7.1.x
+PHP_VERSION = 7.3.x
 
-PHALCON_VERSION = 3.2.x
-
-SWOOLE_VERSION = 1.9.x
+SWOOLE_VERSION = 4.4.x
 
 ## Install
 
