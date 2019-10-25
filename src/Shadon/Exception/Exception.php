@@ -13,7 +13,7 @@ declare(strict_types=1);
 
 namespace Shadon\Exception;
 
-use JsonSerializable;
+use Exception as PhpExcepton;
 use Throwable;
 
 /**
@@ -21,19 +21,43 @@ use Throwable;
  *
  * @author hehui<runphp@qq.com>
  */
-class Exception extends \Exception implements JsonSerializable
+class Exception extends PhpExcepton
 {
     /**
-     * tips.
-     *
+     * @var int
+     */
+    protected $statusCode = 500;
+
+    /**
+     * @var int
+     */
+    protected $errorCode = 500;
+
+    /**
      * @var string
      */
-    protected $hint;
+    protected $hint = '服务器异常';
 
-    public function __construct($message = 'uncatched exception', $code = 500, $hint = '服务器异常', Throwable $previous = null)
+    public function __construct(string $hint = '', $message = '', $code = 0, Throwable $previous = null)
     {
+        $this->hint = '' === $hint ? $this->hint : $hint;
         parent::__construct($message, $code, $previous);
-        $this->hint = $hint;
+    }
+
+    /**
+     * @return int
+     */
+    public function getStatusCode(): int
+    {
+        return $this->statusCode;
+    }
+
+    /**
+     * @return int
+     */
+    public function getErrorCode(): int
+    {
+        return $this->errorCode;
     }
 
     /**
@@ -42,18 +66,5 @@ class Exception extends \Exception implements JsonSerializable
     public function getHint(): string
     {
         return $this->hint;
-    }
-
-    public function jsonSerialize()
-    {
-        return [
-            'exception' => \get_class($this),
-            'message'   => $this->message,
-            'tips'      => $this->hint,
-            'code'      => $this->code,
-            'file'      => $this->file,
-            'line'      => $this->line,
-            'trace'     => $this->getTrace(),
-        ];
     }
 }

@@ -53,10 +53,12 @@ class ExceptionHandler extends SymfonyExceptionHandler
     {
         if (\is_object($this->di)) {
             if (!$exception instanceof FlattenException) {
-                $exception = FlattenException::create($exception);
+                $exception = \Shadon\Exception\FlattenException::create($exception);
             }
+
             $dispatcher = $this->di->get(Dispatcher::class);
             $response = $this->di->get(Response::class);
+
             $dispatcher->dispatch(new BeforeResponseEvent($this->di->get(ContextInterface::class), $exception));
             $response->setStatusCode($exception->getStatusCode());
             $response->send();

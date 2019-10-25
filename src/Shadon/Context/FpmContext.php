@@ -19,7 +19,6 @@ use FastRoute;
 use Illuminate\Contracts\Events\Dispatcher;
 use ReflectionMethod;
 use Shadon\Events\BeforeResponseEvent;
-use Shadon\Exception\LogicException;
 use Shadon\Exception\MethodNotAllowedException;
 use Shadon\Exception\NotFoundException;
 use Shadon\Exception\RequestException;
@@ -159,11 +158,7 @@ class FpmContext implements ContextInterface
     public function handle(array $routeInfo): Response
     {
         if (FastRoute\Dispatcher::FOUND == $routeInfo[0]) {
-            try {
-                $data = $routeInfo[1](...array_values($routeInfo[2]));
-            } catch (LogicException $e) {
-                $data = $e;
-            }
+            $data = $routeInfo[1](...array_values($routeInfo[2]));
         } elseif (FastRoute\Dispatcher::NOT_FOUND == $routeInfo[0]) {
             $data = new NotFoundException();
         } elseif (FastRoute\Dispatcher::METHOD_NOT_ALLOWED == $routeInfo[0]) {

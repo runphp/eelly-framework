@@ -13,17 +13,16 @@ declare(strict_types=1);
 
 namespace Shadon\Exception;
 
-use Throwable;
-
 /**
  * Class MethodNotAllowedException.
  *
  * @author hehui<runphp@qq.com>
  */
-class MethodNotAllowedException extends ClientException
+class MethodNotAllowedException extends RequestException
 {
-    public function __construct($message = 'method not allowed', $hint = 'method not allowed', Throwable $previous = null)
-    {
-        parent::__construct($message, 405, $hint, $previous);
-    }
+    private $statusCode = 405;
+
+    private $errorCode = 405;
+
+    private $hint = 'method not allowed';
 }

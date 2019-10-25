@@ -13,17 +13,16 @@ declare(strict_types=1);
 
 namespace Shadon\Exception;
 
-use Throwable;
-
 /**
  * Class NotFoundException.
  *
  * @author hehui<runphp@qq.com>
  */
-class NotFoundException extends ClientException
+class NotFoundException extends RequestException
 {
-    public function __construct($message = 'not found', $hint = 'not found', Throwable $previous = null)
-    {
-        parent::__construct($message, 404, $hint, $previous);
-    }
+    protected $statusCode = 404;
+
+    protected $errorCode = 404;
+
+    protected $hint = 'not found';
 }

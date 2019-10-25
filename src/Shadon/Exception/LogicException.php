@@ -13,8 +13,6 @@ declare(strict_types=1);
 
 namespace Shadon\Exception;
 
-use Throwable;
-
 /**
  * Class LogicException.
  *
@@ -22,8 +20,9 @@ use Throwable;
  */
 class LogicException extends Exception
 {
-    public function __construct($message = '业务逻辑异常', $code = 10001, $hint = '业务逻辑异常', Throwable $previous = null)
-    {
-        parent::__construct($message, $code, $hint, $previous);
-    }
+    protected $statusCode = 200;
+
+    protected $errorCode = 10000;
+
+    protected $hint = '逻辑异常';
 }

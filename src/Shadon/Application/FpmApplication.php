@@ -17,10 +17,10 @@ use Composer\Autoload\ClassLoader;
 use DI;
 use FastRoute;
 use Illuminate\Config\Repository;
+use RuntimeException;
 use Shadon\Context\ContextInterface;
 use Shadon\Context\FpmContext;
 use Shadon\Error\ExceptionHandler;
-use Shadon\Exception\ServerException;
 use function Shadon\Helper\realpath;
 use Symfony\Component\Debug\ErrorHandler;
 use Symfony\Component\HttpFoundation\Request;
@@ -93,7 +93,7 @@ class FpmApplication
         ]);
         ExceptionHandler::register('develop' == APP['env'])->setDi($this->di);
         if (\in_array(false, APP)) {
-            throw new ServerException('error runtime, check `.env`');
+            throw new RuntimeException('error runtime, check `.env`');
         }
     }
 
