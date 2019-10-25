@@ -11,4 +11,4 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-require __DIR__.'/Helper/functions.php';
+require __DIR__ . '/functions.php';

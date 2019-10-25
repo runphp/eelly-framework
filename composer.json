@@ -49,7 +49,7 @@
 			"Shadon\\": "src/Shadon/"
 		},
 		"files": [
-			"src/Shadon/functions_include.php"
+			"src/Shadon/Helper/functions_include.php"
 		]
 	},
 	"extra": {
