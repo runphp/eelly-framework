@@ -23,6 +23,7 @@ use Shadon\Exception\MethodNotAllowedException;
 use Shadon\Exception\NotFoundException;
 use Shadon\Exception\RequestException;
 use SplStack;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 
 /**
@@ -114,10 +115,11 @@ class FpmContext implements ContextInterface
                 $parameters = $reflectionMethod->getParameters();
                 $paramNum = $reflectionMethod->getNumberOfParameters();
                 if (0 < $paramNum) {
-                    if (!'json' == $this->request->getContentType()) {
+                    $request = $this->get(Request::class);
+                    if (!'json' == $request->getContentType()) {
                         throw new RequestException('bad request, content type must json');
                     }
-                    $data = json_decode($this->request->getContent(), true);
+                    $data = json_decode($request->getContent(), true);
                     if (JSON_ERROR_NONE !== json_last_error()) {
                         throw new RequestException('bad request, content must json');
                     }
