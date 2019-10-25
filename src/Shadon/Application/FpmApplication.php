@@ -19,7 +19,10 @@ use FastRoute;
 use Illuminate\Config\Repository;
 use Shadon\Context\ContextInterface;
 use Shadon\Context\FpmContext;
+use Shadon\Error\ExceptionHandler;
+use Shadon\Exception\ServerException;
 use function Shadon\Helper\realpath;
+use Symfony\Component\Debug\ErrorHandler;
 use Symfony\Component\HttpFoundation\Request;
 
 /**
@@ -70,6 +73,7 @@ class FpmApplication
      */
     private function initRuntime(string $rootPath): void
     {
+        ErrorHandler::register();
         // created default .env
         if (!file_exists('.env')) {
             file_put_contents('.env', preg_replace(
@@ -87,6 +91,10 @@ class FpmApplication
             'rootPath'   => $rootPath,
             'serverName' => 'Shadon/v2.0',
         ]);
+        ExceptionHandler::register('develop' == APP['env'])->setDi($this->di);
+        if (\in_array(false, APP)) {
+            throw new ServerException('error runtime, check `.env`');
+        }
     }
 
     private function registerService(ClassLoader $classLoader): void

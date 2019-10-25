@@ -173,8 +173,7 @@ class FpmContext implements ContextInterface
         /* @var Dispatcher $dispatcher */
         $dispatcher = $this->get(Dispatcher::class);
         $response = $this->get(Response::class);
-        $data = $dispatcher->dispatch(new BeforeResponseEvent($this, $data));
-        $response->setData($data);
+        $dispatcher->dispatch(new BeforeResponseEvent($this, $data));
 
         return $response;
     }
