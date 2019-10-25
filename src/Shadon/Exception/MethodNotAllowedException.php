@@ -20,9 +20,9 @@ namespace Shadon\Exception;
  */
 class MethodNotAllowedException extends RequestException
 {
-    private $statusCode = 405;
+    protected $statusCode = 405;
 
-    private $errorCode = 405;
+    protected $errorCode = 405;
 
-    private $hint = 'method not allowed';
+    protected $hint = 'method not allowed';
 }
