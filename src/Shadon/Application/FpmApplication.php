@@ -20,7 +20,7 @@ use Illuminate\Config\Repository;
 use RuntimeException;
 use Shadon\Context\ContextInterface;
 use Shadon\Context\FpmContext;
-use Shadon\Error\ExceptionHandler;
+use Shadon\Exception\ExceptionHandler;
 use function Shadon\Helper\realpath;
 use Symfony\Component\Debug\ErrorHandler;
 use Symfony\Component\HttpFoundation\Request;

@@ -18,7 +18,7 @@ namespace Shadon\Exception;
  *
  * @author hehui<runphp@qq.com>
  */
-class MethodNotAllowedException extends RequestException
+class MethodNotAllowedException extends AbstractException
 {
     protected $statusCode = 405;
 

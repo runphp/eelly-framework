@@ -21,27 +21,41 @@ use Throwable;
  *
  * @author hehui<runphp@qq.com>
  */
-class Exception extends PhpExcepton
+abstract class AbstractException extends PhpExcepton
 {
     /**
+     * http status code.
+     *
      * @var int
      */
     protected $statusCode = 500;
 
     /**
+     * unique error code.
+     *
      * @var int
      */
     protected $errorCode = 500;
 
     /**
+     * hint.
+     *
      * @var string
      */
     protected $hint = '服务器异常';
 
-    public function __construct(string $hint = '', $message = '', $code = 0, Throwable $previous = null)
+    /**
+     * Exception constructor.
+     *
+     * @param string         $message  error info
+     * @param string         $hint     hint info
+     * @param int            $code
+     * @param Throwable|null $previous
+     */
+    public function __construct(string $message = '', string $hint = '', int $code = 0, Throwable $previous = null)
     {
-        $this->hint = '' === $hint ? $this->hint : $hint;
         parent::__construct($message, $code, $previous);
+        $this->hint = '' === $hint ? $this->hint : $hint;
     }
 
     /**

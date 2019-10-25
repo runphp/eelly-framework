@@ -11,7 +11,7 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace Shadon\Error;
+namespace Shadon\Exception;
 
 use DI\Container;
 use Illuminate\Contracts\Events\Dispatcher;
@@ -55,10 +55,8 @@ class ExceptionHandler extends SymfonyExceptionHandler
             if (!$exception instanceof FlattenException) {
                 $exception = \Shadon\Exception\FlattenException::create($exception);
             }
-
             $dispatcher = $this->di->get(Dispatcher::class);
             $response = $this->di->get(Response::class);
-
             $dispatcher->dispatch(new BeforeResponseEvent($this->di->get(ContextInterface::class), $exception));
             $response->setStatusCode($exception->getStatusCode());
             $response->send();

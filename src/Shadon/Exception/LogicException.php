@@ -18,7 +18,7 @@ namespace Shadon\Exception;
  *
  * @author hehui<runphp@qq.com>
  */
-class LogicException extends Exception
+class LogicException extends AbstractException
 {
     protected $statusCode = 200;
 

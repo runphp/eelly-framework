@@ -18,7 +18,7 @@ namespace Shadon\Exception;
  *
  * @author hehui<runphp@qq.com>
  */
-class RequestException extends Exception
+class RequestException extends AbstractException
 {
     protected $statusCode = 400;
 

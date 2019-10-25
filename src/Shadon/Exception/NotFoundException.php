@@ -18,7 +18,7 @@ namespace Shadon\Exception;
  *
  * @author hehui<runphp@qq.com>
  */
-class NotFoundException extends RequestException
+class NotFoundException extends AbstractException
 {
     protected $statusCode = 404;
 

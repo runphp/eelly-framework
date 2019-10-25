@@ -18,6 +18,6 @@ namespace Shadon\Exception;
  *
  * @author hehui<runphp@qq.com>
  */
-class ServerException extends Exception
+class ServerException extends AbstractException
 {
 }

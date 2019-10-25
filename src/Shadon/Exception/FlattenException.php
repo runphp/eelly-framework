@@ -31,7 +31,7 @@ class FlattenException extends SymfonyException
     {
         /* @var $return FlattenException */
         $return = parent::createFromThrowable($exception, $statusCode, $headers);
-        if ($exception instanceof Exception) {
+        if ($exception instanceof AbstractException) {
             $return->setStatusCode($exception->getStatusCode());
             $return->setErrorCode($exception->getErrorCode());
             $return->setHint($exception->getHint());
