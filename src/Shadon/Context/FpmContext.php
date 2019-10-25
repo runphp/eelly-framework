@@ -162,9 +162,9 @@ class FpmContext implements ContextInterface
         if (FastRoute\Dispatcher::FOUND == $routeInfo[0]) {
             $data = $routeInfo[1](...array_values($routeInfo[2]));
         } elseif (FastRoute\Dispatcher::NOT_FOUND == $routeInfo[0]) {
-            $data = new NotFoundException();
+            throw new NotFoundException();
         } elseif (FastRoute\Dispatcher::METHOD_NOT_ALLOWED == $routeInfo[0]) {
-            $data = new MethodNotAllowedException();
+            throw new MethodNotAllowedException();
         }
         // ready for response
         /* @var Dispatcher $dispatcher */
