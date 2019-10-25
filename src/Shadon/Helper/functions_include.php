@@ -11,4 +11,6 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-require __DIR__.'/functions.php';
+namespace Shadon\Helper;
+
+require __DIR__.'/path.php';
