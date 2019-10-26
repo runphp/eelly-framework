@@ -13,7 +13,6 @@ declare(strict_types=1);
 
 namespace Shadon\Exception;
 
-use DI\Container;
 use Illuminate\Contracts\Events\Dispatcher;
 use Shadon\Context\ContextInterface;
 use Shadon\Events\BeforeResponseEvent;
@@ -29,35 +28,35 @@ use Symfony\Component\HttpFoundation\Response;
 class ExceptionHandler extends SymfonyExceptionHandler
 {
     /**
-     * @var Container
+     * @var ContextInterface
      */
-    private $di;
+    private $context;
 
     /**
-     * @return mixed
+     * @return ContextInterface
      */
-    public function getDi()
+    public function getContext(): ContextInterface
     {
-        return $this->di;
+        return $this->context;
     }
 
     /**
-     * @param mixed $di
+     * @param ContextInterface $context
      */
-    public function setDi(&$di): void
+    public function setContext(ContextInterface $context): void
     {
-        $this->di = &$di;
+        $this->context = $context;
     }
 
     public function sendPhpResponse($exception): void
     {
-        if (\is_object($this->di)) {
+        if (\is_object($this->context)) {
             if (!$exception instanceof FlattenException) {
                 $exception = \Shadon\Exception\FlattenException::create($exception);
             }
-            $dispatcher = $this->di->get(Dispatcher::class);
-            $response = $this->di->get(Response::class);
-            $context = $this->di->get(ContextInterface::class);
+            $dispatcher = $this->context->get(Dispatcher::class);
+            $response = $this->context->get(Response::class);
+            $context = $this->context->get(ContextInterface::class);
             $context->set('return', $exception);
             $dispatcher->dispatch(new BeforeResponseEvent($context));
             $response->setStatusCode($exception->getStatusCode());

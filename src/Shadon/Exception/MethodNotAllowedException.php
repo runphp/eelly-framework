@@ -20,6 +20,8 @@ namespace Shadon\Exception;
  */
 class MethodNotAllowedException extends AbstractException
 {
+    protected $code = E_USER_NOTICE;
+
     protected $statusCode = 405;
 
     protected $errorCode = 405;

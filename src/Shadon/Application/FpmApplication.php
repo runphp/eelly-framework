@@ -17,6 +17,7 @@ use Composer\Autoload\ClassLoader;
 use DI;
 use FastRoute;
 use Illuminate\Config\Repository;
+use Psr\Log\LoggerInterface;
 use RuntimeException;
 use Shadon\Context\ContextInterface;
 use Shadon\Context\FpmContext;
@@ -33,11 +34,6 @@ use Symfony\Component\HttpFoundation\Request;
 class FpmApplication
 {
     /**
-     * @var Di\Container
-     */
-    private $di;
-
-    /**
      * MacroApplication constructor.
      *.
      *
@@ -46,19 +42,18 @@ class FpmApplication
      *
      * @throws \Exception
      */
-    public function __construct(string $rootPath, ClassLoader $classLoader)
+    public function __invoke(string $rootPath, ClassLoader $classLoader): void
     {
-        $this->initRuntime($rootPath);
-        $this->registerService($classLoader);
+        $this->run($this->registerService($classLoader, ...$this->initRuntime($rootPath)));
     }
 
     /**
-     * @return int
+     * Run your php app.
+     *
+     * @param ContextInterface $context
      */
-    public function run()
+    private function run(ContextInterface $context): void
     {
-        /* @var FpmContext $context */
-        $context = $this->di->get(ContextInterface::class);
         $request = $context->get(Request::class);
         $dispatcher = FastRoute\simpleDispatcher($context->routeDefinitionCallback());
         $routeInfo = $dispatcher->dispatch($request->getMethod(), $request->getPathInfo());
@@ -66,38 +61,39 @@ class FpmApplication
     }
 
     /**
+     * Initialize runtime.
+     *
      * @param string $namespace
      * @param string $rootPath
      *
      * @throws \Exception
      */
-    private function initRuntime(string $rootPath): void
+    private function initRuntime(string $rootPath): array
     {
-        ErrorHandler::register();
-        // created default .env
-        if (!file_exists('.env')) {
-            file_put_contents('.env', preg_replace(
-                    '/^APP_KEY=/m',
-                    'APP_KEY='.base64_encode(random_bytes(32)),
-                    file_get_contents('.env.example'))
-            );
-        }
-        $dotenv = \Dotenv\Dotenv::create($rootPath);
-        $dotenv->load();
-        \define('APP', [
-            'env'        => getenv('APP_ENV'),
-            'key'        => getenv('APP_KEY'),
-            'namespace'  => getenv('NS'),
-            'rootPath'   => $rootPath,
-            'serverName' => 'Shadon/v2.0',
-        ]);
-        ExceptionHandler::register('develop' == APP['env'])->setDi($this->di);
+        $errorhandler = ErrorHandler::register();
+        $this->initEnvironment($rootPath);
+        $exceptionHandler = ExceptionHandler::register('develop' == APP['env']);
         if (\in_array(false, APP)) {
             throw new RuntimeException('error runtime, check `.env`');
         }
+
+        return [$errorhandler, $exceptionHandler];
     }
 
-    private function registerService(ClassLoader $classLoader): void
+    /**
+     * Register service.
+     *
+     * @param ClassLoader      $classLoader
+     * @param ErrorHandler     $errorHandler
+     * @param ExceptionHandler $exceptionHandler
+     *
+     * @throws DI\DependencyException
+     * @throws DI\NotFoundException
+     * @throws \Exception
+     *
+     * @return ContextInterface
+     */
+    private function registerService(ClassLoader $classLoader, ErrorHandler $errorHandler, ExceptionHandler $exceptionHandler): ContextInterface
     {
         $containerBuilder = new DI\ContainerBuilder();
         $containerBuilder->enableCompilation(realpath('var'));
@@ -114,6 +110,39 @@ class FpmApplication
             'config' => new Repository($config),
         ];
         $containerBuilder->addDefinitions($definitions);
-        $this->di = $containerBuilder->build();
+        $di = $containerBuilder->build();
+        /* @var FpmContext $context */
+        $context = $di->get(ContextInterface::class);
+        $errorHandler->setDefaultLogger($di->get(LoggerInterface::class));
+        $exceptionHandler->setContext($context);
+
+        return $context;
+    }
+
+    /**
+     * Initiali app env.
+     *
+     * @param string $rootPath
+     *
+     * @throws \Exception
+     */
+    private function initEnvironment(string $rootPath): void
+    {
+        if (!file_exists('.env')) {
+            file_put_contents('.env', preg_replace(
+                    '/^APP_KEY=/m',
+                    'APP_KEY='.base64_encode(random_bytes(32)),
+                    file_get_contents('.env.example'))
+            );
+        }
+        $dotenv = \Dotenv\Dotenv::create($rootPath);
+        $dotenv->load();
+        \define('APP', [
+            'env'        => getenv('APP_ENV'),
+            'key'        => getenv('APP_KEY'),
+            'namespace'  => getenv('NS'),
+            'rootPath'   => $rootPath,
+            'serverName' => 'Shadon/v2.0',
+        ]);
     }
 }
