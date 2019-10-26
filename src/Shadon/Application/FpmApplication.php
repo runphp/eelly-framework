@@ -37,7 +37,7 @@ class FpmApplication
      * MacroApplication constructor.
      *.
      *
-     * @param string      $namespace
+     * @param string      $rootPath
      * @param ClassLoader $classLoader
      *
      * @throws \Exception
@@ -63,10 +63,11 @@ class FpmApplication
     /**
      * Initialize runtime.
      *
-     * @param string $namespace
      * @param string $rootPath
      *
      * @throws \Exception
+     *
+     * @return array
      */
     private function initRuntime(string $rootPath): array
     {
