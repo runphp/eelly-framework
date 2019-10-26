@@ -57,16 +57,14 @@ class ExceptionHandler extends SymfonyExceptionHandler
             }
             $dispatcher = $this->di->get(Dispatcher::class);
             $response = $this->di->get(Response::class);
-            $dispatcher->dispatch(new BeforeResponseEvent($this->di->get(ContextInterface::class), $exception));
+            $context = $this->di->get(ContextInterface::class);
+            $context->set('return', $exception);
+            $dispatcher->dispatch(new BeforeResponseEvent($context));
             $response->setStatusCode($exception->getStatusCode());
+            $response->setData($context->get('return'));
             $response->send();
         } else {
             parent::sendPhpResponse($exception);
         }
-    }
-
-    public function getContent(FlattenException $exception)
-    {
-        return parent::getContent($exception);
     }
 }

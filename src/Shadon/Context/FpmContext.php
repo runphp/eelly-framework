@@ -96,7 +96,7 @@ class FpmContext implements ContextInterface
     public function handle(array $routeInfo): Response
     {
         if (FastRoute\Dispatcher::FOUND == $routeInfo[0]) {
-            $data = $routeInfo[1](...array_values($routeInfo[2]));
+            $this->set('return', $routeInfo[1](...array_values($routeInfo[2])));
         } elseif (FastRoute\Dispatcher::NOT_FOUND == $routeInfo[0]) {
             throw new NotFoundException('check request url');
         } elseif (FastRoute\Dispatcher::METHOD_NOT_ALLOWED == $routeInfo[0]) {
@@ -106,7 +106,8 @@ class FpmContext implements ContextInterface
         /* @var Dispatcher $dispatcher */
         $dispatcher = $this->get(Dispatcher::class);
         $response = $this->get(Response::class);
-        $dispatcher->dispatch(new BeforeResponseEvent($this, $data));
+        $dispatcher->dispatch(new BeforeResponseEvent($this));
+        $response->setData($this->get('return'));
 
         return $response;
     }
