@@ -56,11 +56,10 @@ class ExceptionHandler extends SymfonyExceptionHandler
             }
             $dispatcher = $this->context->get(Dispatcher::class);
             $response = $this->context->get(Response::class);
-            $context = $this->context->get(ContextInterface::class);
-            $context->set('return', $exception);
-            $dispatcher->dispatch(new BeforeResponseEvent($context));
+            $this->context->set('return', $exception);
+            $dispatcher->dispatch(new BeforeResponseEvent($this->context));
             $response->setStatusCode($exception->getStatusCode());
-            $response->setData($context->get('return'));
+            $response->setData($this->context->get('return'));
             $response->send();
         } else {
             parent::sendPhpResponse($exception);
