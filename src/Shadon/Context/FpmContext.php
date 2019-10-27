@@ -89,7 +89,7 @@ class FpmContext implements ContextInterface
             $routeCollector->addRoute(
                 'develop' == APP['env'] ? ['GET', 'POST'] : 'POST',
                 '/{module:[a-z][a-zA-Z]*}/{controller:[a-z][a-zA-Z]*}/{action:[a-z][a-zA-Z]*}',
-                (new McaHandler())($this)
+                $this->get(McaHandler::class)()
             );
         };
     }
