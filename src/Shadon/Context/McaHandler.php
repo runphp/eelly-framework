@@ -37,8 +37,7 @@ class McaHandler
     public function __invoke()
     {
         return (function (string $module, string $controller, string $action) {
-            $context = $this->context;
-            if (!\in_array($module, $context->get('config')->get('moduleList'))) {
+            if (!\in_array($module, $this->context->get('config')->get('moduleList'))) {
                 throw new NotFoundException(sprintf('moudule `%s` not found', $module));
             }
             // loader module class·
@@ -46,7 +45,7 @@ class McaHandler
             // check class and method
             $this->validateHandler($handlerClass, $action);
             // push handler
-            $context->push(function (ContextInterface $context) {
+            $this->context->push(function (ContextInterface $context) {
                 // init handler
                 $reflectionMethod = $context->get(\ReflectionMethod::class);
                 $hander = $context->get($reflectionMethod->class);
@@ -56,7 +55,7 @@ class McaHandler
             });
             // run handler
             try {
-                return $context->next();
+                return $this->context->next();
             } catch (\TypeError $e) {
                 throw new RequestException($e->getMessage());
             }
