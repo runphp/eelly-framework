@@ -17,6 +17,7 @@ use Composer\Autoload\ClassLoader;
 use DI\Annotation\Inject;
 use Shadon\Exception\NotFoundException;
 use Shadon\Exception\RequestException;
+use Symfony\Component\HttpFoundation\Request;
 
 /**
  * McaHandler.
@@ -36,12 +37,12 @@ class McaHandler
 
     public function __invoke()
     {
-        return (function (string $module, string $controller, string $action) {
+        return (function (string $module, string $controller, string $action, string $NS = 'API') {
             if (!\in_array($module, $this->context->get('config')->get('moduleList'))) {
                 throw new NotFoundException(sprintf('moudule `%s` not found', $module));
             }
             // loader module class·
-            $handlerClass = $this->loadModuleClass($module, $controller);
+            $handlerClass = $this->loadModuleClass($module, $controller, $NS);
             // check class and method
             $this->validateHandler($handlerClass, $action);
             // push handler
@@ -62,15 +63,16 @@ class McaHandler
         })->bindTo($this);
     }
 
-    private function loadModuleClass(string $module, string $controller): string
+    private function loadModuleClass(string $module, string $controller, string $NS): string
     {
         $this->context->set('module', $module);
         $moduleNamespace = APP['namespace'].'\\Module\\'.ucfirst($module);
         $this->context->get(ClassLoader::class)->addPsr4($moduleNamespace.'\\', 'src/Module/'.ucfirst($module.'/'));
-        $handlerClass = $moduleNamespace.'\\API\\'.ucfirst($controller).'API';
+        $handlerClass = sprintf('%s\\%s\\%s%s', $moduleNamespace, $NS, ucfirst($controller), $NS);
         if (!class_exists($handlerClass)) {
             throw new NotFoundException(sprintf('handler `%s` not found', $controller));
         }
+        $this->context->set('handlerNS', $NS);
         // initial moudle instance
         $moduleInstance = $this->context->get($moduleNamespace.'\\Module');
         $moduleInstance->init();

@@ -83,9 +83,18 @@ class FpmContext implements ContextInterface
     public function routeDefinitionCallback(): callable
     {
         return function (FastRoute\RouteCollector $routeCollector): void {
+            // home
             $routeCollector->addRoute('GET', '/', function () {
                 return 'Hello, I\'m '.APP['serverName'];
             });
+            // internal api
+            $routeCollector->addRoute(
+                'develop' == APP['env'] ? ['GET', 'POST'] : 'POST',
+                '/{module:[a-z][a-zA-Z]*}/internal/{controller:[a-z][a-zA-Z]*}/{action:[a-z][a-zA-Z]*}',
+                function (string $module, string $controller, string $action) {
+                    return $this->get(McaHandler::class)()($module, $controller, $action, 'Internal');
+                });
+            // open api
             $routeCollector->addRoute(
                 'develop' == APP['env'] ? ['GET', 'POST'] : 'POST',
                 '/{module:[a-z][a-zA-Z]*}/{controller:[a-z][a-zA-Z]*}/{action:[a-z][a-zA-Z]*}',
