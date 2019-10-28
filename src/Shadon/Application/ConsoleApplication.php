@@ -25,6 +25,8 @@ use Shadon\Context\FpmContext;
 use Shadon\Exception\ExceptionHandler;
 use function Shadon\Helper\realpath;
 use Symfony\Component\Console\Application;
+use Symfony\Component\Console\Command\Command;
+use Symfony\Component\Console\Command\ListCommand;
 use Symfony\Component\Console\ConsoleEvents;
 use Symfony\Component\Console\Event\ConsoleCommandEvent;
 use Symfony\Component\Console\Event\ConsoleErrorEvent;
@@ -76,14 +78,19 @@ class ConsoleApplication
         $app->setDispatcher($dispatcher);
         $dispatcher->addListener(ConsoleEvents::COMMAND, function (ConsoleCommandEvent $event) use ($context, $classLoader): void {
             $command = $event->getCommand();
+            if ($command instanceof ListCommand) {
+                return;
+            }
             // init module
             $class = new \ReflectionClass(\get_class($command));
             $namespace = $class->getNamespaceName();
+            $moduleName = substr($namespace, 11, -8);
+            $context->set('module', lcfirst($moduleName));
             $prefix = substr($namespace, 0, -7);
             $classLoader->addPsr4($prefix, \dirname($class->getFileName(), 2));
             $module = $context->get($prefix.'Module');
             $module->init();
-            // TODO
+            $context->injectOn($command);
         });
         $dispatcher->addListener(ConsoleEvents::ERROR, function (ConsoleErrorEvent $event): void {
         });

@@ -13,7 +13,7 @@ declare(strict_types=1);
 
 namespace Shadon\Context;
 
-use DI\Annotation\Inject;
+use DI\Container;
 use SplStack;
 
 /**
@@ -24,7 +24,7 @@ use SplStack;
 trait ContextTrait
 {
     /**
-     * @var Inject
+     * @var Container
      */
     private $di;
 
@@ -69,6 +69,11 @@ trait ContextTrait
     public function set(string $name, $value): void
     {
         $this->entries[$name] = $value;
+    }
+
+    public function injectOn($object)
+    {
+        return $this->di->injectOn($object);
     }
 
     public function moduleConfig($name)
