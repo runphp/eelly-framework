@@ -13,13 +13,11 @@ declare(strict_types=1);
 
 namespace Shadon\Context;
 
-use DI\Container;
 use FastRoute;
 use Illuminate\Contracts\Events\Dispatcher;
 use Shadon\Events\BeforeResponseEvent;
 use Shadon\Exception\MethodNotAllowedException;
 use Shadon\Exception\NotFoundException;
-use SplStack;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -31,54 +29,6 @@ use Symfony\Component\HttpFoundation\Response;
 class FpmContext implements ContextInterface
 {
     use ContextTrait;
-
-    /**
-     * @var Container
-     */
-    private $di;
-
-    /**
-     * map.
-     *
-     * @var array
-     */
-    private $entries = [];
-
-    /**
-     * @var SplStack
-     */
-    private $handlerStack;
-
-    public function __construct()
-    {
-        $this->handlerStack = new SplStack();
-    }
-
-    public function push(callable $handler): void
-    {
-        $this->handlerStack->push($handler);
-    }
-
-    public function next()
-    {
-        $handler = $this->handlerStack->shift();
-
-        return $handler($this);
-    }
-
-    public function get($name)
-    {
-        if (isset($this->entries[$name])) {
-            return $this->entries[$name];
-        } else {
-            return $this->di->get($name);
-        }
-    }
-
-    public function set(string $name, $value): void
-    {
-        $this->entries[$name] = $value;
-    }
 
     public function routeDefinitionCallback(): callable
     {
