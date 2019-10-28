@@ -23,11 +23,6 @@ use Shadon\Context\ContextInterface;
 class BeforeResponseEvent
 {
     /**
-     * @var mixed
-     */
-    private $data;
-
-    /**
      * @var ContextInterface
      */
     private $context;
@@ -38,25 +33,16 @@ class BeforeResponseEvent
      * @param ContextInterface $context
      * @param mixed            $data
      */
-    public function __construct(ContextInterface $context, $data)
+    public function __construct(ContextInterface $context)
     {
-        $this->data = $data;
-        $this->contex = $context;
-    }
-
-    /**
-     * @return mixed
-     */
-    public function getData()
-    {
-        return $this->data;
+        $this->context = $context;
     }
 
     /**
      * @return ContextInterface
      */
-    public function getContex(): ContextInterface
+    public function getContext(): ContextInterface
     {
-        return $this->contex;
+        return $this->context;
     }
 }

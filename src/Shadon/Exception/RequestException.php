@@ -20,6 +20,8 @@ namespace Shadon\Exception;
  */
 class RequestException extends AbstractException
 {
+    protected $code = E_USER_NOTICE;
+
     protected $statusCode = 400;
 
     protected $errorCode = 400;

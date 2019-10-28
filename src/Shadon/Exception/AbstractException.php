@@ -13,16 +13,20 @@ declare(strict_types=1);
 
 namespace Shadon\Exception;
 
-use Exception as PhpExcepton;
-use Throwable;
+use Symfony\Component\Debug\Exception\FatalErrorException;
 
 /**
  * Class Exception.
  *
  * @author hehui<runphp@qq.com>
  */
-abstract class AbstractException extends PhpExcepton
+abstract class AbstractException extends FatalErrorException
 {
+    /**
+     * @var int
+     */
+    protected $code = E_CORE_ERROR;
+
     /**
      * http status code.
      *
@@ -45,16 +49,16 @@ abstract class AbstractException extends PhpExcepton
     protected $hint = '服务器异常';
 
     /**
-     * Exception constructor.
+     * AbstractException constructor.
      *
-     * @param string         $message  error info
-     * @param string         $hint     hint info
-     * @param int            $code
-     * @param Throwable|null $previous
+     * @param string $message
+     * @param string $hint
+     * @param int    $code
+     * @param int    $severity
      */
-    public function __construct(string $message = '', string $hint = '', int $code = 0, Throwable $previous = null)
+    public function __construct(string $message, string $hint = '')
     {
-        parent::__construct($message, $code, $previous);
+        parent::__construct($message, $this->code, $this->code, $this->getFile(), $this->getLine());
         $this->hint = '' === $hint ? $this->hint : $hint;
     }
 
