@@ -20,6 +20,8 @@ namespace Shadon\Exception;
  */
 class LogicException extends AbstractException
 {
+    protected $code = 0;
+
     protected $statusCode = 200;
 
     protected $errorCode = 10000;

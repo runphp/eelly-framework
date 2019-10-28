@@ -20,6 +20,7 @@ use Shadon\Events\BeforeResponseEvent;
 use Shadon\Exception\MethodNotAllowedException;
 use Shadon\Exception\NotFoundException;
 use SplStack;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 
 /**
@@ -88,7 +89,7 @@ class FpmContext implements ContextInterface
             $routeCollector->addRoute(
                 'develop' == APP['env'] ? ['GET', 'POST'] : 'POST',
                 '/{module:[a-z][a-zA-Z]*}/{controller:[a-z][a-zA-Z]*}/{action:[a-z][a-zA-Z]*}',
-                (new McaHandler())($this)
+                $this->get(McaHandler::class)()
             );
         };
     }
@@ -96,17 +97,23 @@ class FpmContext implements ContextInterface
     public function handle(array $routeInfo): Response
     {
         if (FastRoute\Dispatcher::FOUND == $routeInfo[0]) {
-            $data = $routeInfo[1](...array_values($routeInfo[2]));
+            $this->set('return', $routeInfo[1](...array_values($routeInfo[2])));
         } elseif (FastRoute\Dispatcher::NOT_FOUND == $routeInfo[0]) {
-            throw new NotFoundException('check request url');
+            throw new NotFoundException(
+                sprintf('api `%s` not found', $this->get(Request::class)->getPathInfo())
+            );
         } elseif (FastRoute\Dispatcher::METHOD_NOT_ALLOWED == $routeInfo[0]) {
-            throw new MethodNotAllowedException('check method');
+            $request = $this->get(Request::class);
+            throw new MethodNotAllowedException(
+                sprintf('api `%s` method `%s` not allowed', $request->getPathInfo(), $request->getMethod())
+            );
         }
         // ready for response
         /* @var Dispatcher $dispatcher */
         $dispatcher = $this->get(Dispatcher::class);
         $response = $this->get(Response::class);
-        $dispatcher->dispatch(new BeforeResponseEvent($this, $data));
+        $dispatcher->dispatch(new BeforeResponseEvent($this));
+        $response->setData($this->get('return'));
 
         return $response;
     }

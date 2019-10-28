@@ -20,6 +20,8 @@ namespace Shadon\Exception;
  */
 class NotFoundException extends AbstractException
 {
+    protected $code = E_USER_NOTICE;
+
     protected $statusCode = 404;
 
     protected $errorCode = 404;

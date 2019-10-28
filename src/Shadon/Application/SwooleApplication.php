@@ -11,20 +11,13 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace Shadon\Exception;
+namespace Shadon\Application;
 
 /**
- * Class MethodNotAllowedException.
+ * SwooleApplication run in php swoole.
  *
  * @author hehui<runphp@qq.com>
  */
-class MethodNotAllowedException extends AbstractException
+class SwooleApplication
 {
-    protected $code = E_USER_NOTICE;
-
-    protected $statusCode = 405;
-
-    protected $errorCode = 405;
-
-    protected $hint = 'method not allowed';
 }
