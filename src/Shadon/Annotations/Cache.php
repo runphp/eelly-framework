@@ -19,7 +19,7 @@ use Doctrine\Common\Annotations\Annotation\Attribute;
  * Cache annotation.
  *
  * @Annotation
- * @Target({"METHOD","PROPERTY"})
+ * @Target("METHOD")
  * @Attributes({
  *     @Attribute("lifetime", type="int")
  * })

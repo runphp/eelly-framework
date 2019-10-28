@@ -41,6 +41,8 @@ class McaHandler
             if (!\in_array($module, $this->context->get('config')->get('moduleList'))) {
                 throw new NotFoundException(sprintf('moudule `%s` not found', $module));
             }
+            $this->context->set('controller', $controller);
+            $this->context->set('action', $action);
             // loader module class·
             $handlerClass = $this->loadModuleClass($module, $controller, $NS);
             // check class and method
