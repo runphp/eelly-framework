@@ -11,13 +11,14 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace Shadon\Application;
+namespace Shadon\Context;
 
 /**
- * SwooleApplication run in php swoole.
+ * Class ConsoleContext.
  *
  * @author hehui<runphp@qq.com>
  */
-class SwooleApplication
+class ConsoleContext implements ContextInterface
 {
+    use ContextTrait;
 }

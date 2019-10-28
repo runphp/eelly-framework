@@ -14,3 +14,11 @@ declare(strict_types=1);
 namespace Shadon\Helper;
 
 require __DIR__.'/path.php';
+
+/**
+ * @return bool
+ */
+function isCli()
+{
+    return \PHP_SAPI === 'cli';
+}

@@ -27,4 +27,6 @@ interface ContextInterface
     public function get($name);
 
     public function set(string $name, $value): void;
+
+    public function injectOn($instance);
 }
