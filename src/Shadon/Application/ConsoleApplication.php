@@ -26,11 +26,10 @@ use Shadon\Exception\ExceptionHandler;
 use function Shadon\Helper\realpath;
 use Symfony\Component\Console\Application;
 use Symfony\Component\Console\Command\Command;
+use Symfony\Component\Console\Command\HelpCommand;
 use Symfony\Component\Console\Command\ListCommand;
 use Symfony\Component\Console\ConsoleEvents;
 use Symfony\Component\Console\Event\ConsoleCommandEvent;
-use Symfony\Component\Console\Event\ConsoleErrorEvent;
-use Symfony\Component\Console\Event\ConsoleTerminateEvent;
 use Symfony\Component\Debug\ErrorHandler;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 use Symfony\Component\Finder\Finder;
@@ -57,7 +56,7 @@ class ConsoleApplication
         $app = new Application(APP['serverName'], APP['version']);
         $finder = new Finder();
         $parser = (new ParserFactory())->create(ParserFactory::ONLY_PHP7);
-        foreach ($finder->in('src/Module/*/Console')->name('*.php') as $file) {
+        foreach ($finder->in('src/Module/*/Command')->name('*Command.php') as $file) {
             /* @var \Symfony\Component\Finder\SplFileInfo $file */
             $stmts = $parser->parse($file->getContents());
             foreach ($stmts as $stmt) {
@@ -78,7 +77,7 @@ class ConsoleApplication
         $app->setDispatcher($dispatcher);
         $dispatcher->addListener(ConsoleEvents::COMMAND, function (ConsoleCommandEvent $event) use ($context, $classLoader): void {
             $command = $event->getCommand();
-            if ($command instanceof ListCommand) {
+            if ($command instanceof ListCommand || $command instanceof HelpCommand) {
                 return;
             }
             // init module
@@ -91,10 +90,6 @@ class ConsoleApplication
             $module = $context->get($prefix.'Module');
             $module->init();
             $context->injectOn($command);
-        });
-        $dispatcher->addListener(ConsoleEvents::ERROR, function (ConsoleErrorEvent $event): void {
-        });
-        $dispatcher->addListener(ConsoleEvents::TERMINATE, function (ConsoleTerminateEvent $event): void {
         });
 
         $app->run();
