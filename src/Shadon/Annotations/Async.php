@@ -21,7 +21,9 @@ use Doctrine\Common\Annotations\Annotation\Attribute;
  * @Annotation
  * @Target("METHOD")
  * @Attributes({
- *     @Attribute("routingKey", type="string")
+ *     @Attribute("routingKey", type="string"),
+ *     @Attribute("timeToLive", type="int"),
+ *     @Attribute("delay", type="int")
  * })
  *
  * @author hehui<runphp@qq.com>
@@ -29,13 +31,31 @@ use Doctrine\Common\Annotations\Annotation\Attribute;
 class Async
 {
     /**
+     * 路由key.
+     *
      * @var string
      */
     private $routingKey = 'default';
 
+    /**
+     * 有效期.
+     *
+     * @var int
+     */
+    private $timeToLive;
+
+    /**
+     * 延时.
+     *
+     * @var int
+     */
+    private $delay = 0;
+
     public function __construct(array $values)
     {
         $this->routingKey = $values['routingKey'] ?? $this->routingKey;
+        $this->timeToLive = $values['timeToLive'] ?? $this->timeToLive;
+        $this->delay = $values['delay'] ?? $this->delay;
     }
 
     /**
@@ -44,5 +64,21 @@ class Async
     public function getRoutingKey(): string
     {
         return $this->routingKey;
+    }
+
+    /**
+     * @return int|null
+     */
+    public function getTimeToLive(): ?int
+    {
+        return $this->timeToLive;
+    }
+
+    /**
+     * @return int
+     */
+    public function getDelay(): int
+    {
+        return $this->delay;
     }
 }
