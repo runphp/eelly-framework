@@ -87,7 +87,7 @@ class McaHandler
         if (!method_exists($handlerClass, $action)) {
             throw new NotFoundException(sprintf('handler `%s` method `%s` not found', $handlerClass, $action));
         }
-        $this->context->set(\ReflectionMethod::class, $reflectionMethod = new \ReflectionMethod($handlerClass, $action));        
+        $this->context->set(\ReflectionMethod::class, $reflectionMethod = new \ReflectionMethod($handlerClass, $action));
         $parameters = $reflectionMethod->getParameters();
         $paramNum = $reflectionMethod->getNumberOfParameters();
         if (0 < $paramNum) {
