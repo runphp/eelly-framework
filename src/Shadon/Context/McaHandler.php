@@ -84,11 +84,10 @@ class McaHandler
 
     private function validateHandler(string $handlerClass, string $action): void
     {
-        try {
-            $this->context->set(\ReflectionMethod::class, $reflectionMethod = new \ReflectionMethod($handlerClass, $action));
-        } catch (\ReflectionException $e) {
-            throw new NotFoundException(sprintf('handler method `%s` not found', $action));
+        if (!method_exists($handlerClass, $action)) {
+            throw new NotFoundException(sprintf('handler `%s` method `%s` not found', $handlerClass, $action));
         }
+        $this->context->set(\ReflectionMethod::class, $reflectionMethod = new \ReflectionMethod($handlerClass, $action));        
         $parameters = $reflectionMethod->getParameters();
         $paramNum = $reflectionMethod->getNumberOfParameters();
         if (0 < $paramNum) {
