@@ -40,4 +40,8 @@ abstract class AbstractModule implements ModuleDefinitionInterface
             $this->context->push($handler);
         }
     }
+
+    public function init(): void
+    {
+    }
 }
