@@ -13,20 +13,15 @@ declare(strict_types=1);
 
 namespace Shadon\Exception;
 
-/**
- * Class MethodNotAllowedException.
- *
- * @author hehui<runphp@qq.com>
- */
-class MethodNotAllowedException extends AbstractException
+class TooManyRequestsException extends RequestException
 {
     protected $code = E_USER_NOTICE;
 
-    protected $statusCode = 405;
+    protected $statusCode = 429;
 
-    protected $errorCode = 405;
+    protected $errorCode = 429;
 
-    protected $message = 'method not allowed';
+    protected $message = 'too many requests';
 
-    protected $hint = '方法不对';
+    protected $hint = '请求太频繁';
 }

@@ -14,19 +14,19 @@ declare(strict_types=1);
 namespace Shadon\Exception;
 
 /**
- * Class MethodNotAllowedException.
+ * Class UnauthorizedException.
  *
  * @author hehui<runphp@qq.com>
  */
-class MethodNotAllowedException extends AbstractException
+class UnauthorizedException extends RequestException
 {
     protected $code = E_USER_NOTICE;
 
-    protected $statusCode = 405;
+    protected $statusCode = 401;
 
-    protected $errorCode = 405;
+    protected $errorCode = 401;
 
-    protected $message = 'method not allowed';
+    protected $message = 'unauthorized';
 
-    protected $hint = '方法不对';
+    protected $hint = '未授权';
 }

@@ -26,5 +26,7 @@ class NotFoundException extends AbstractException
 
     protected $errorCode = 404;
 
-    protected $hint = 'not found';
+    protected $message = 'not found';
+
+    protected $hint = '未找到';
 }

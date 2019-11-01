@@ -42,6 +42,11 @@ abstract class AbstractException extends FatalErrorException
     protected $errorCode = 500;
 
     /**
+     * @var string
+     */
+    protected $message = 'server error';
+
+    /**
      * hint.
      *
      * @var string

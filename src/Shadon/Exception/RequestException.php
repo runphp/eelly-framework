@@ -26,5 +26,7 @@ class RequestException extends AbstractException
 
     protected $errorCode = 400;
 
-    protected $hint = 'bad request';
+    protected $message = 'bad request';
+
+    protected $hint = '错误的请求';
 }

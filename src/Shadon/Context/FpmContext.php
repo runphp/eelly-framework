@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace Shadon\Context;
 
 use Defuse\Crypto\Crypto;
+use Defuse\Crypto\Exception\WrongKeyOrModifiedCiphertextException;
 use Defuse\Crypto\Key;
 use FastRoute;
 use Illuminate\Contracts\Events\Dispatcher;
@@ -87,8 +88,9 @@ class FpmContext implements ContextInterface
             $data['uid'] = (string) (int) $data['uid'];
             $token = Crypto::encrypt($data['uid'], Key::loadFromAsciiSafeString($cryptKey));
             // 写入缓存
-            $cache = new ChainAdapter($this->get('tokenCaches'));
-            $cacheKey = sprintf('token_%s_%s', $data['uid'], md5($data['uid']));
+            /* @var ChainAdapter $cache */
+            $cache = $this->get('tokenCaches');
+            $cacheKey = $this->tokenKey($data['uid']);
             /* @var \Symfony\Component\Cache\CacheItem $cacheItem */
             $cacheItem = $cache->getItem($cacheKey);
             // 第一次登录
@@ -126,8 +128,33 @@ class FpmContext implements ContextInterface
             $value['data'] = $data;
             $cacheItem->set($value);
             $cache->save($cacheItem);
+        } elseif (null === $data) {
+            /* @var ChainAdapter $cache */
+            $cache = $this->get('tokenCaches');
+            $cryptKey = $this->get('config')->get('cryptKey');
+            try {
+                $uid = Crypto::decrypt($token, Key::loadFromAsciiSafeString($cryptKey));
+            } catch (WrongKeyOrModifiedCiphertextException $e) {
+                throw new A
+            }
+            /* @var ChainAdapter $cache */
+            $cache = $this->get('tokenCaches');
+            $cacheKey = $this->tokenKey($data['uid']);
+            /* @var \Symfony\Component\Cache\CacheItem $cacheItem */
+            $cacheItem = $cache->getItem($cacheKey);
+            // 数据丢失
+            if (!$cacheItem->isHit()) {
+                
+            } else {
+                
+            }
         }
 
         return $token;
+    }
+    
+    private function tokenKey(string $uid):string
+    {
+        return sprintf('token_%s_%s', $uid, md5($uid));
     }
 }

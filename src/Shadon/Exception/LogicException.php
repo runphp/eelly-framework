@@ -26,5 +26,7 @@ class LogicException extends AbstractException
 
     protected $errorCode = 10000;
 
+    protected $message = 'logic exception';
+
     protected $hint = '逻辑异常';
 }
