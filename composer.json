@@ -28,6 +28,7 @@
 		"illuminate/database": "^6.3.0",
 		"illuminate/events": "^6.3.0",
 		"illuminate/pagination": "^6.3.0",
+		"jenssegers/mongodb": "^3.6.1",
 		"mongodb/mongodb": "^1.5.0",
 		"monolog/monolog": "^2.0.0",
 		"nikic/fast-route": "^1.3.0",

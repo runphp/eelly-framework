@@ -29,4 +29,6 @@ interface ContextInterface
     public function set(string $name, $value): void;
 
     public function injectOn($instance);
+
+    public function token(?string $token = null, ?array $data = null): ?string;
 }

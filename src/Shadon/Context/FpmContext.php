@@ -13,11 +13,14 @@ declare(strict_types=1);
 
 namespace Shadon\Context;
 
+use Defuse\Crypto\Crypto;
+use Defuse\Crypto\Key;
 use FastRoute;
 use Illuminate\Contracts\Events\Dispatcher;
 use Shadon\Events\BeforeResponseEvent;
 use Shadon\Exception\MethodNotAllowedException;
 use Shadon\Exception\NotFoundException;
+use Symfony\Component\Cache\Adapter\ChainAdapter;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -75,5 +78,56 @@ class FpmContext implements ContextInterface
         $response->setData($this->get('return'));
 
         return $response;
+    }
+
+    public function token(?string $token = null, ?array $data = null): ?string
+    {
+        if (null === $token && isset($data['uid'])) {
+            $cryptKey = $this->get('config')->get('cryptKey');
+            $data['uid'] = (string) (int) $data['uid'];
+            $token = Crypto::encrypt($data['uid'], Key::loadFromAsciiSafeString($cryptKey));
+            // 写入缓存
+            $cache = new ChainAdapter($this->get('tokenCaches'));
+            $cacheKey = sprintf('token_%s_%s', $data['uid'], md5($data['uid']));
+            /* @var \Symfony\Component\Cache\CacheItem $cacheItem */
+            $cacheItem = $cache->getItem($cacheKey);
+            // 第一次登录
+            if (!$cacheItem->isHit()) {
+                $value = [
+                    'tokens' => [],
+                    'data'   => $data,
+                ];
+            } else {
+                $value = $cacheItem->get();
+                // 旧token失效 最多保留10个token
+                $count = 0;
+                $minTime = PHP_INT_MAX;
+                $minKey = 0;
+                foreach ($value['tokens'] as $k => $v) {
+                    if (!$value['tokens'][$k]['revoked']) {
+                        $value['tokens'][$k]['revoked'] = true;
+                        $value['tokens'][$k]['updated'] = time();
+                    }
+                    if ($value['tokens'][$k]['updated'] < $minTime) {
+                        $minKey = $k;
+                        $minTime = $value['tokens'][$k]['updated'];
+                    }
+                    if (10 < ++$count) {
+                        unset($value['tokens'][$minKey]);
+                    }
+                }
+            }
+            // 增加新token
+            $value['tokens'][$token] = [
+                'revoked' => false,
+                'created' => time(),
+                'updated' => time(),
+            ];
+            $value['data'] = $data;
+            $cacheItem->set($value);
+            $cache->save($cacheItem);
+        }
+
+        return $token;
     }
 }
