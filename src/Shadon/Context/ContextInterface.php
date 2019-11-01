@@ -30,5 +30,5 @@ interface ContextInterface
 
     public function injectOn($instance);
 
-    public function token(?string $token = null, ?array $data = null): ?string;
+    public function token(?string $token = null, ?array $data = null): array;
 }

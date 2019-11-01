@@ -21,6 +21,8 @@ use Illuminate\Contracts\Events\Dispatcher;
 use Shadon\Events\BeforeResponseEvent;
 use Shadon\Exception\MethodNotAllowedException;
 use Shadon\Exception\NotFoundException;
+use Shadon\Exception\UnauthorizedException;
+use Shadon\Exception\UnsupportedException;
 use Symfony\Component\Cache\Adapter\ChainAdapter;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -81,7 +83,7 @@ class FpmContext implements ContextInterface
         return $response;
     }
 
-    public function token(?string $token = null, ?array $data = null): ?string
+    public function token(?string $token = null, ?array $data = null): array
     {
         if (null === $token && isset($data['uid'])) {
             $cryptKey = $this->get('config')->get('cryptKey');
@@ -135,25 +137,39 @@ class FpmContext implements ContextInterface
             try {
                 $uid = Crypto::decrypt($token, Key::loadFromAsciiSafeString($cryptKey));
             } catch (WrongKeyOrModifiedCiphertextException $e) {
-                throw new A
+                throw new UnauthorizedException($e->getMessage());
             }
             /* @var ChainAdapter $cache */
             $cache = $this->get('tokenCaches');
-            $cacheKey = $this->tokenKey($data['uid']);
+            $cacheKey = $this->tokenKey($uid);
             /* @var \Symfony\Component\Cache\CacheItem $cacheItem */
             $cacheItem = $cache->getItem($cacheKey);
             // 数据丢失
             if (!$cacheItem->isHit()) {
-                
+                // TODO 恢复数据
             } else {
-                
+                $value = $cacheItem->get();
+                if (!isset($value['tokens'][$token])) {
+                    // 已删除
+                    throw new UnauthorizedException(sprintf('not found token `%s`', $token));
+                } elseif ($value['tokens'][$token]['revoked']) {
+                    // 已失效
+                    throw new UnauthorizedException(sprintf('token `%s` was revoked at %s', $token, date('Y-m-d H:i:s', $value['tokens'][$token]['updated'])));
+                } else {
+                    // 刷新时间
+                    $value['tokens'][$token]['updated'] = time();
+                    $cacheItem->set($value);
+                    $cache->save($cacheItem);
+                }
             }
+        } else {
+            throw new UnsupportedException(sprintf('check your params `%s`', json_encode(['token' => $token, 'data' => $data])));
         }
 
-        return $token;
+        return $value;
     }
-    
-    private function tokenKey(string $uid):string
+
+    private function tokenKey(string $uid): string
     {
         return sprintf('token_%s_%s', $uid, md5($uid));
     }

@@ -24,7 +24,7 @@ class ConsoleContext implements ContextInterface
 {
     use ContextTrait;
 
-    public function token(?string $token = null, ?array $data = null): ?string
+    public function token(?string $token = null, ?array $data = null): array
     {
         throw new UnsupportedException('命令行不支持token机制');
     }
