@@ -72,7 +72,7 @@ class TokenChainAdapter extends \Symfony\Component\Cache\Adapter\ChainAdapter im
         $this->save($cacheItem);
     }
 
-    public function fetchToken(string $tokenId, int $uid): DataInterface
+    public function fetchToken(string $tokenId, string $uid): DataInterface
     {
         $cacheKey = $this->tokenKey($uid);
         $cacheItem = $this->getItem($cacheKey);

@@ -27,7 +27,7 @@ class User extends Guest
         if (!isset($array['uid'], $array['username'], $array['avatar'], $array['mobile'])) {
             throw new ServerException(sprintf('Invalid arguments `%s`', json_encode($array)));
         }
-        $array['uid'] = (int) $array['uid'];
+        $array['uid'] = (string) (int) $array['uid'];
         parent::__construct($array, $flags);
     }
 }

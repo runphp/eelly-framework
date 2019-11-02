@@ -76,6 +76,7 @@ class UserToken implements TokenInterface
         try {
             $uid = Crypto::decrypt($tokenId, $this->key);
             $data = $this->storage->fetchToken($tokenId, $uid);
+            $data->token = $tokenId;
         } catch (WrongKeyOrModifiedCiphertextException | UnsupportedException | UnauthorizedException $e) {
             $data = $this->requesInfo();
         }

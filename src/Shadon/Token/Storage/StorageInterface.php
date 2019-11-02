@@ -29,5 +29,5 @@ interface StorageInterface extends AdapterInterface, CacheInterface, PruneableIn
 {
     public function saveToken(string $tokenId, User $data): void;
 
-    public function fetchToken(string $tokenId, int $uid): DataInterface;
+    public function fetchToken(string $tokenId, string $uid): DataInterface;
 }
