@@ -93,6 +93,7 @@ class FpmApplication
         /* @var FpmContext $context */
         $context = $di->get(ContextInterface::class);
         $errorHandler->setDefaultLogger($di->get(LoggerInterface::class));
+        ini_set('display_errors', '0');
         $exceptionHandler->setContext($context);
 
         return $context;

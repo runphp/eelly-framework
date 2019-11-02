@@ -71,6 +71,11 @@ trait ContextTrait
         $this->entries[$name] = $value;
     }
 
+    public function has(string $name): bool
+    {
+        return isset($this->entries[$name]) || $this->di->has($name);
+    }
+
     public function injectOn($object)
     {
         return $this->di->injectOn($object);
