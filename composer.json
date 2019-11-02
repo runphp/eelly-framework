@@ -22,6 +22,7 @@
 		"ext-swoole":"^4.4",
 		"defuse/php-encryption": "^v2.2",
 		"doctrine/annotations": "^1.8",
+		"doctrine/cache": "^1.8",
 		"enqueue/enqueue": "^0.9",
 		"guzzlehttp/guzzle": "^6.2",
 		"illuminate/config": "^6.3",
@@ -44,7 +45,6 @@
 		"symfony/finder": "^4.3.5",
 		"symfony/http-foundation": "^4.3",
 		"symfony/http-kernel": "^4.3",
-		"symfony/security-bundle": "^4.3",
 		"vlucas/phpdotenv": "^3.6"
 	},
 	"autoload": {
