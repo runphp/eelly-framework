@@ -63,7 +63,7 @@ abstract class AbstractException extends FatalErrorException
      */
     public function __construct(string $message = '', string $hint = '')
     {
-        parent::__construct($message, $this->code, $this->code, $this->getFile(), $this->getLine());
+        parent::__construct('' === $message ? $this->message : $message, $this->code, $this->code, $this->getFile(), $this->getLine());
         $this->hint = '' === $hint ? $this->hint : $hint;
     }
 
