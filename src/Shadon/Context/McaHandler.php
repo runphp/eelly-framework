@@ -60,6 +60,7 @@ class McaHandler
             try {
                 return $this->context->next();
             } catch (\TypeError $e) {
+                // TODO server error
                 throw new RequestException($e->getMessage());
             }
         })->bindTo($this);

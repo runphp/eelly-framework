@@ -71,7 +71,11 @@ class UserToken implements TokenInterface
     public function getToken(?string $tokenId = null): DataInterface
     {
         if (null === $tokenId) {
-            $tokenId = $this->request->headers->get('Authorization');
+            if ($this->request->headers->has('Authorization')) {
+                $tokenId = $this->request->headers->get('Authorization');
+            } else {
+                return $this->requesInfo();
+            }
         }
         try {
             $uid = Crypto::decrypt($tokenId, $this->key);
