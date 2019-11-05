@@ -14,13 +14,19 @@ declare(strict_types=1);
 namespace Shadon\Exception;
 
 /**
- * UnsupportedException.
+ * Class ServiceUnavailableException.
  *
  * @author hehui<runphp@qq.com>
  */
-class UnsupportedException extends AbstractException
+class ServiceUnavailableException extends AbstractException
 {
-    protected $message = 'unsupported';
+    protected $code = E_CORE_ERROR;
 
-    protected $hint = '服务不支持';
+    protected $statusCode = 503;
+
+    protected $errorCode = 503;
+
+    protected $message = 'service unavailable';
+
+    protected $hint = '无法提供服务';
 }

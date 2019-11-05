@@ -14,13 +14,19 @@ declare(strict_types=1);
 namespace Shadon\Exception;
 
 /**
- * UnsupportedException.
+ * Class GatewayTimeoutException.
  *
  * @author hehui<runphp@qq.com>
  */
-class UnsupportedException extends AbstractException
+class GatewayTimeoutException extends AbstractException
 {
-    protected $message = 'unsupported';
+    protected $code = E_CORE_ERROR;
 
-    protected $hint = '服务不支持';
+    protected $statusCode = 504;
+
+    protected $errorCode = 504;
+
+    protected $message = 'gateway timeout';
+
+    protected $hint = '网关超时';
 }
