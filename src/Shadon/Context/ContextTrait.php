@@ -81,7 +81,7 @@ trait ContextTrait
         return $this->di->injectOn($object);
     }
 
-    public function moduleConfig($name)
+    public function moduleConfig($name): array
     {
         return require sprintf('var/config/%s/%s/%s.php', APP['env'], $this->get('module'), $name);
     }
