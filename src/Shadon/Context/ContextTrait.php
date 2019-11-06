@@ -83,6 +83,8 @@ trait ContextTrait
 
     public function moduleConfig($name): array
     {
-        return require sprintf('var/config/%s/%s/%s.php', APP['env'], $this->get('module'), $name);
+        $file = sprintf('var/config/%s/%s/%s.php', APP['env'], $this->get('module'), $name);
+
+        return file_exists($file) ? require $file : [];
     }
 }
