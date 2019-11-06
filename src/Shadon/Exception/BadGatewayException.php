@@ -14,13 +14,19 @@ declare(strict_types=1);
 namespace Shadon\Exception;
 
 /**
- * UnsupportedException.
+ * Class BadGatewayException.
  *
  * @author hehui<runphp@qq.com>
  */
-class UnsupportedException extends AbstractException
+class BadGatewayException extends AbstractException
 {
-    protected $message = 'unsupported';
+    protected $code = E_CORE_ERROR;
 
-    protected $hint = '服务不支持';
+    protected $statusCode = 502;
+
+    protected $errorCode = 502;
+
+    protected $message = 'bad gateway';
+
+    protected $hint = '错误网关';
 }
