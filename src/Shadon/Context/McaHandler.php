@@ -15,6 +15,8 @@ namespace Shadon\Context;
 
 use Composer\Autoload\ClassLoader;
 use DI\Annotation\Inject;
+use Illuminate\Contracts\Events\Dispatcher;
+use Shadon\Events\ModuleLoadEvent;
 use Shadon\Exception\NotFoundException;
 use Shadon\Exception\RequestException;
 use Symfony\Component\HttpFoundation\Request;
@@ -43,8 +45,8 @@ class McaHandler
             }
             $this->context->set('controller', $controller);
             $this->context->set('action', $action);
-            // loader module class·
-            $handlerClass = $this->loadModuleClass($module, $controller, $NS);
+            // loader module class
+            $handlerClass = $this->loadModule($module, $controller, $NS);
             // check class and method
             $this->validateHandler($handlerClass, $action);
             // push handler
@@ -66,7 +68,7 @@ class McaHandler
         })->bindTo($this);
     }
 
-    private function loadModuleClass(string $module, string $controller, string $NS): string
+    private function loadModule(string $module, string $controller, string $NS): string
     {
         $this->context->set('module', $module);
         $moduleNamespace = APP['namespace'].'\\Module\\'.ucfirst($module);
@@ -76,9 +78,12 @@ class McaHandler
             throw new NotFoundException(sprintf('handler `%s` not found', $controller));
         }
         $this->context->set('handlerNS', $NS);
+        $dispatcher = $this->context->get(Dispatcher::class);
+        $dispatcher->dispatch(ModuleLoadEvent::class.':before', [$this->context]);
         // initial moudle instance
         $moduleInstance = $this->context->get($moduleNamespace.'\\Module');
         $moduleInstance->init();
+        $dispatcher->dispatch(ModuleLoadEvent::class.':after', [$this->context, $moduleInstance]);
 
         return $handlerClass;
     }
