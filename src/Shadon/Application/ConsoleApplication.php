@@ -99,7 +99,7 @@ class ConsoleApplication
     {
         $containerBuilder = new DI\ContainerBuilder();
         $containerBuilder->enableCompilation(realpath('var'), 'CompiledContainerConsole');
-        $containerBuilder->writeProxiesToFile(true, realpath('var/cache'));
+        $containerBuilder->writeProxiesToFile(true, realpath('var/cache/console'));
         $containerBuilder->useAutowiring(true);
         $containerBuilder->useAnnotations(true);
         $config = (require realpath('var/config').'/console.php') + (require realpath('var/config/'.APP['env']).'/config.php');

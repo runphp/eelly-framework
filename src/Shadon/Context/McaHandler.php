@@ -62,8 +62,12 @@ class McaHandler
             try {
                 return $this->context->next();
             } catch (\TypeError $e) {
-                // TODO server error
-                throw new RequestException($e->getMessage());
+                $trace = $e->getTrace();
+                if ($trace[0]['function'] == $action) {
+                    throw new RequestException($e->getMessage());
+                } else {
+                    throw $e;
+                }
             }
         })->bindTo($this);
     }
@@ -99,7 +103,7 @@ class McaHandler
         if (0 < $paramNum) {
             $request = $this->context->get(Request::class);
             if (!'json' == $request->getContentType()) {
-                throw new RequestException('bad request, content type must json');
+                throw new RequestException('bad request, `Content-Type` must `application/json`');
             }
             $data = json_decode($request->getContent(), true);
             if (JSON_ERROR_NONE !== json_last_error()) {

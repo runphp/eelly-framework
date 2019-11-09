@@ -76,7 +76,7 @@ class FpmApplication
     {
         $containerBuilder = new DI\ContainerBuilder();
         $containerBuilder->enableCompilation(realpath('var'), 'CompiledContainerFpm');
-        $containerBuilder->writeProxiesToFile(true, realpath('var/cache'));
+        $containerBuilder->writeProxiesToFile(true, realpath('var/cache/fpm'));
         $containerBuilder->useAutowiring(true);
         $containerBuilder->useAnnotations(true);
         $config = (require realpath('var/config').'/fpm.php') + (require realpath('var/config/'.APP['env']).'/config.php');
