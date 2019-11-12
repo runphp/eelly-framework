@@ -22,7 +22,7 @@ use Shadon\Token\Data\DataInterface;
  */
 interface TokenInterface
 {
-    public function setToken(?string $tokenId = null, DataInterface $data): DataInterface;
+    public function setToken(string $tokenId = null, DataInterface $data): DataInterface;
 
-    public function getToken(?string $tokenId = null): DataInterface;
+    public function getToken(string $tokenId = null): DataInterface;
 }

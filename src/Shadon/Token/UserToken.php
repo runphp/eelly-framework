@@ -53,7 +53,7 @@ class UserToken implements TokenInterface
         $this->request = $request;
     }
 
-    public function setToken(?string $tokenId = null, DataInterface $data): DataInterface
+    public function setToken(string $tokenId = null, DataInterface $data): DataInterface
     {
         $this->requesInfo($data);
         if ($data instanceof User) {
@@ -68,7 +68,7 @@ class UserToken implements TokenInterface
         return $data;
     }
 
-    public function getToken(?string $tokenId = null): DataInterface
+    public function getToken(string $tokenId = null): DataInterface
     {
         if (null === $tokenId) {
             if ($this->request->headers->has('Authorization')) {

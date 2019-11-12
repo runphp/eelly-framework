@@ -85,7 +85,6 @@ class TokenChainAdapter extends \Symfony\Component\Cache\Adapter\ChainAdapter im
         $cacheKey = $this->tokenKey($uid);
         $cacheItem = $this->getItem($cacheKey);
         if (!$cacheItem->isHit()) {
-            // TODO 恢复数据
             throw new UnsupportedException('token data lost');
         } else {
             $value = $cacheItem->get();
