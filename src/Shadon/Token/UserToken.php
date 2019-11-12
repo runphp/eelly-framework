@@ -53,7 +53,7 @@ class UserToken implements TokenInterface
         $this->request = $request;
     }
 
-    public function setToken(string $tokenId = null, DataInterface $data): DataInterface
+    public function setToken(DataInterface $data, string $tokenId = null): DataInterface
     {
         $this->requesInfo($data);
         if ($data instanceof User) {
@@ -88,7 +88,7 @@ class UserToken implements TokenInterface
         return $data;
     }
 
-    private function requesInfo(?DataInterface $data = null): DataInterface
+    private function requesInfo(DataInterface $data = null): DataInterface
     {
         if (null === $data) {
             $data = new Guest();
