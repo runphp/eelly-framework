@@ -23,7 +23,10 @@ class UnitTestApplication
      * @param string      $rootPath
      * @param ClassLoader $classLoader
      *
-     * @throws \Exception
+     * @throws \DI\DependencyException
+     * @throws \DI\NotFoundException
+     *
+     * @return \Shadon\Context\ContextInterface
      */
     public function context(string $rootPath, ClassLoader $classLoader)
     {

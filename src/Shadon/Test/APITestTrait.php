@@ -31,14 +31,12 @@ trait APITestTrait
 
     public static function setUpBeforeClass(): void
     {
-        if (!\defined('ROOT_PATH')) {
-            \define('ROOT_PATH', realpath(\dirname(__DIR__, 6)));
-            chdir(ROOT_PATH);
+        if (self::$context) {
+            return;
         }
-        if (null === self::$context) {
-            $classLoader = require ROOT_PATH.'/vendor/autoload.php';
-            self::$context = (new UnitTestApplication())->context(ROOT_PATH, $classLoader);
-        }
+        $rootPath = realpath(\dirname(__DIR__, 6));
+        $classLoader = require $rootPath.'/vendor/autoload.php';
+        self::$context = (new UnitTestApplication())->context($rootPath, $classLoader);
         preg_match('/.+\\\Module\\\(.+)\\\API\\\.+/', static::class, $matches);
         $module = lcfirst($matches[1]);
         self::$context->set('module', $module);

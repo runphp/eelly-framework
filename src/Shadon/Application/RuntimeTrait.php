@@ -65,6 +65,7 @@ trait RuntimeTrait
         if (\defined('APP')) {
             return;
         }
+        chdir($rootPath);
         if (!file_exists('.env')) {
             file_put_contents('.env', preg_replace(
                     '/^APP_KEY=/m',
@@ -75,6 +76,7 @@ trait RuntimeTrait
         $dotenv = \Dotenv\Dotenv::create($rootPath);
         $dotenv->load();
         \define('APP', [
+            'rootPath'   => $rootPath,
             'env'        => getenv('APP_ENV'),
             'key'        => getenv('APP_KEY'),
             'namespace'  => getenv('NS'),
