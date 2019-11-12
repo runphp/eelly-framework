@@ -103,8 +103,7 @@ trait RuntimeTrait
             'config' => new Repository($config),
         ];
         $containerBuilder->addDefinitions($definitions);
-        $di = $containerBuilder->build();
 
-        return $di;
+        return $containerBuilder->build();
     }
 }
