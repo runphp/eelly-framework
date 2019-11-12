@@ -16,12 +16,10 @@ namespace Shadon\Application;
 use Composer\Autoload\ClassLoader;
 use DI;
 use FastRoute;
-use Illuminate\Config\Repository;
 use Psr\Log\LoggerInterface;
 use Shadon\Context\ContextInterface;
 use Shadon\Context\FpmContext;
 use Shadon\Exception\ExceptionHandler;
-use function Shadon\Helper\realpath;
 use Symfony\Component\Debug\ErrorHandler;
 use Symfony\Component\HttpFoundation\Request;
 
@@ -74,22 +72,7 @@ class FpmApplication
      */
     private function registerService(ClassLoader $classLoader, ErrorHandler $errorHandler, ExceptionHandler $exceptionHandler): ContextInterface
     {
-        $containerBuilder = new DI\ContainerBuilder();
-        $containerBuilder->enableCompilation(realpath('var'), 'CompiledContainerFpm');
-        $containerBuilder->writeProxiesToFile(true, realpath('var/cache/fpm'));
-        $containerBuilder->useAutowiring(true);
-        $containerBuilder->useAnnotations(true);
-        $config = (require realpath('var/config').'/fpm.php') + (require realpath('var/config/'.APP['env']).'/config.php');
-        $definitions = $config['definitions'];
-        unset($config['definitions']);
-        $definitions += [
-            // loader
-            ClassLoader::class => $classLoader,
-            // config
-            'config' => new Repository($config),
-        ];
-        $containerBuilder->addDefinitions($definitions);
-        $di = $containerBuilder->build();
+        $di = $this->createContainer($classLoader);
         /* @var FpmContext $context */
         $context = $di->get(ContextInterface::class);
         $errorHandler->setDefaultLogger($di->get(LoggerInterface::class));

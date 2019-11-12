@@ -14,8 +14,6 @@ declare(strict_types=1);
 namespace Shadon\Application;
 
 use Composer\Autoload\ClassLoader;
-use DI;
-use Illuminate\Config\Repository;
 use PhpParser\Node\Stmt\Class_;
 use PhpParser\Node\Stmt\Namespace_;
 use PhpParser\ParserFactory;
@@ -23,7 +21,6 @@ use Psr\Log\LoggerInterface;
 use Shadon\Context\ContextInterface;
 use Shadon\Context\FpmContext;
 use Shadon\Exception\ExceptionHandler;
-use function Shadon\Helper\realpath;
 use Symfony\Component\Console\Application;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Command\HelpCommand;
@@ -85,22 +82,7 @@ class ConsoleApplication
 
     private function registerService(ClassLoader $classLoader, ErrorHandler $errorHandler, ExceptionHandler $exceptionHandler): ContextInterface
     {
-        $containerBuilder = new DI\ContainerBuilder();
-        $containerBuilder->enableCompilation(realpath('var'), 'CompiledContainerConsole');
-        $containerBuilder->writeProxiesToFile(true, realpath('var/cache/console'));
-        $containerBuilder->useAutowiring(true);
-        $containerBuilder->useAnnotations(true);
-        $config = (require realpath('var/config').'/console.php') + (require realpath('var/config/'.APP['env']).'/config.php');
-        $definitions = $config['definitions'];
-        unset($config['definitions']);
-        $definitions += [
-            // loader
-            ClassLoader::class => $classLoader,
-            // config
-            'config' => new Repository($config),
-        ];
-        $containerBuilder->addDefinitions($definitions);
-        $di = $containerBuilder->build();
+        $di = $this->createContainer($classLoader);
         /* @var FpmContext $context */
         $context = $di->get(ContextInterface::class);
         $errorHandler->setDefaultLogger($di->get(LoggerInterface::class));

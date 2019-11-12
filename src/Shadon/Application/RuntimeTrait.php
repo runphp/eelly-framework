@@ -13,8 +13,13 @@ declare(strict_types=1);
 
 namespace Shadon\Application;
 
+use Composer\Autoload\ClassLoader;
+use DI;
+use Illuminate\Config\Repository;
 use Shadon\Exception\ExceptionHandler;
 use Shadon\Exception\ServerException;
+use function Shadon\Helper\isCli;
+use function Shadon\Helper\realpath;
 use Symfony\Component\Debug\ErrorHandler;
 
 /**
@@ -71,5 +76,35 @@ trait RuntimeTrait
             'serverName' => 'Shadon',
             'version'    => '2.0',
         ]);
+    }
+
+    /**
+     * @param ClassLoader $classLoader
+     *
+     * @throws \Exception
+     *
+     * @return DI\Container
+     */
+    private function createContainer(ClassLoader $classLoader): DI\Container
+    {
+        $isCli = isCli();
+        $containerBuilder = new DI\ContainerBuilder();
+        $containerBuilder->enableCompilation(realpath('var'), $isCli ? 'CompiledContainerConsole' : 'CompiledContainerFpm');
+        $containerBuilder->writeProxiesToFile(true, realpath($isCli ? 'var/cache/console' : 'var/cache/fpm'));
+        $containerBuilder->useAutowiring(true);
+        $containerBuilder->useAnnotations(true);
+        $config = (require realpath('var/config').($isCli ? '/console.php' : '/fpm.php')) + (require realpath('var/config/'.APP['env']).'/config.php');
+        $definitions = $config['definitions'];
+        unset($config['definitions']);
+        $definitions += [
+            // loader
+            ClassLoader::class => $classLoader,
+            // config
+            'config' => new Repository($config),
+        ];
+        $containerBuilder->addDefinitions($definitions);
+        $di = $containerBuilder->build();
+
+        return $di;
     }
 }
