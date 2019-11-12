@@ -44,6 +44,11 @@ class ConsoleApplication
     use RuntimeTrait;
 
     /**
+     * @var Application
+     */
+    private $app;
+
+    /**
      * @param string      $rootPath
      * @param ClassLoader $classLoader
      *
@@ -53,7 +58,7 @@ class ConsoleApplication
     {
         $context = $this->registerService($classLoader, ...$this->initRuntime($rootPath));
 
-        $app = new Application(APP['serverName'], APP['version']);
+        $this->app = new Application(APP['serverName'], APP['version']);
         $finder = new Finder();
         $parser = (new ParserFactory())->create(ParserFactory::ONLY_PHP7);
         foreach ($finder->in('src/Module/*/Command')->name('*Command.php') as $file) {
@@ -73,24 +78,7 @@ class ConsoleApplication
                 }
             }
         }
-        $dispatcher = new EventDispatcher();
-        $app->setDispatcher($dispatcher);
-        $dispatcher->addListener(ConsoleEvents::COMMAND, function (ConsoleCommandEvent $event) use ($context, $classLoader): void {
-            $command = $event->getCommand();
-            if ($command instanceof ListCommand || $command instanceof HelpCommand) {
-                return;
-            }
-            // init module
-            $class = new \ReflectionClass(\get_class($command));
-            $namespace = $class->getNamespaceName();
-            $moduleName = substr($namespace, 11, -8);
-            $context->set('module', lcfirst($moduleName));
-            $prefix = substr($namespace, 0, -7);
-            $classLoader->addPsr4($prefix, \dirname($class->getFileName(), 2));
-            $module = $context->get($prefix.'Module');
-            $module->init();
-            $context->injectOn($command);
-        });
+        $this->addEvents($classLoader, $context);
 
         $app->run();
     }
@@ -119,5 +107,31 @@ class ConsoleApplication
         $exceptionHandler->setContext($context);
 
         return $context;
+    }
+
+    /**
+     * @param ClassLoader      $classLoader
+     * @param ContextInterface $context
+     */
+    private function addEvents(ClassLoader $classLoader, ContextInterface $context): void
+    {
+        $dispatcher = new EventDispatcher();
+        $this->app->setDispatcher($dispatcher);
+        $dispatcher->addListener(ConsoleEvents::COMMAND, function (ConsoleCommandEvent $event) use ($context, $classLoader): void {
+            $command = $event->getCommand();
+            if ($command instanceof ListCommand || $command instanceof HelpCommand) {
+                return;
+            }
+            // init module
+            $class = new \ReflectionClass(\get_class($command));
+            $namespace = $class->getNamespaceName();
+            $moduleName = substr($namespace, 11, -8);
+            $context->set('module', lcfirst($moduleName));
+            $prefix = substr($namespace, 0, -7);
+            $classLoader->addPsr4($prefix, \dirname($class->getFileName(), 2));
+            $module = $context->get($prefix.'Module');
+            $module->init();
+            $context->injectOn($command);
+        });
     }
 }

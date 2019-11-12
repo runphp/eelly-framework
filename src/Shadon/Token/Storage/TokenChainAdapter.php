@@ -11,7 +11,7 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace  Shadon\Token\Storage;
+namespace Shadon\Token\Storage;
 
 use Shadon\Exception\UnauthorizedException;
 use Shadon\Exception\UnsupportedException;
@@ -32,6 +32,14 @@ class TokenChainAdapter extends \Symfony\Component\Cache\Adapter\ChainAdapter im
      */
     private const MAX_TOKENS = 10;
 
+    private const TOKENS = 'tokens';
+
+    private const REVOKED = 'revoked';
+
+    private const UPDATED = 'updated';
+
+    private const CREATED = 'created';
+
     public function saveToken(string $tokenId, User $data): void
     {
         $cacheKey = $this->tokenKey($data->uid);
@@ -39,32 +47,32 @@ class TokenChainAdapter extends \Symfony\Component\Cache\Adapter\ChainAdapter im
         $now = time();
         if (!$cacheItem->isHit()) {
             $value = [
-                'tokens' => [],
+                self::TOKENS => [],
             ];
         } else {
             $value = $cacheItem->get();
             // 旧token失效 最多保留10个token
             $minTime = time();
-            foreach ($value['tokens'] as $k => $v) {
-                if (!$value['tokens'][$k]['revoked']) {
-                    $value['tokens'][$k]['revoked'] = true;
-                    $value['tokens'][$k]['updated'] = $now;
+            foreach ($value[self::TOKENS] as $k => $v) {
+                if (!$value[self::TOKENS][$k][self::REVOKED]) {
+                    $value[self::TOKENS][$k][self::REVOKED] = true;
+                    $value[self::TOKENS][$k][self::UPDATED] = $now;
                 }
-                if ($value['tokens'][$k]['updated'] < $minTime) {
-                    $minTime = $value['tokens'][$k]['updated'];
+                if ($value[self::TOKENS][$k][self::UPDATED] < $minTime) {
+                    $minTime = $value[self::TOKENS][$k][self::UPDATED];
                     $minKey = $k;
                 }
             }
-            if (self::MAX_TOKENS <= \count($value['tokens'])) {
-                unset($value['tokens'][$minKey]);
+            if (self::MAX_TOKENS <= \count($value[self::TOKENS])) {
+                unset($value[self::TOKENS][$minKey]);
             }
         }
 
         // 增加新token
-        $value['tokens'][$tokenId] = [
-            'revoked' => false,
-            'created' => $now,
-            'updated' => $now,
+        $value[self::TOKENS][$tokenId] = [
+            self::REVOKED => false,
+            self::CREATED => $now,
+            self::UPDATED => $now,
         ];
         $value['data'] = $data->getArrayCopy();
 
@@ -81,15 +89,15 @@ class TokenChainAdapter extends \Symfony\Component\Cache\Adapter\ChainAdapter im
             throw new UnsupportedException('token data lost');
         } else {
             $value = $cacheItem->get();
-            if (!isset($value['tokens'][$tokenId])) {
+            if (!isset($value[self::TOKENS][$tokenId])) {
                 // 已删除
                 throw new UnauthorizedException(sprintf('not found token `%s`', $tokenId));
-            } elseif ($value['tokens'][$tokenId]['revoked']) {
+            } elseif ($value[self::TOKENS][$tokenId][self::REVOKED]) {
                 // 已失效
-                throw new UnauthorizedException(sprintf('token `%s` was revoked at %s', $tokenId, date('Y-m-d H:i:s', $value['tokens'][$tokenId]['updated'])));
+                throw new UnauthorizedException(sprintf('token `%s` was revoked at %s', $tokenId, date('Y-m-d H:i:s', $value[self::TOKENS][$tokenId][self::UPDATED])));
             } else {
                 // 刷新时间
-                $value['tokens'][$tokenId]['updated'] = time();
+                $value[self::TOKENS][$tokenId][self::UPDATED] = time();
                 $cacheItem->set($value);
                 $this->save($cacheItem);
             }
