@@ -17,17 +17,13 @@ use Composer\Autoload\ClassLoader;
 use PhpParser\Node\Stmt\Class_;
 use PhpParser\Node\Stmt\Namespace_;
 use PhpParser\ParserFactory;
-use Psr\Log\LoggerInterface;
 use Shadon\Context\ContextInterface;
-use Shadon\Context\FpmContext;
-use Shadon\Exception\ExceptionHandler;
 use Symfony\Component\Console\Application;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Command\HelpCommand;
 use Symfony\Component\Console\Command\ListCommand;
 use Symfony\Component\Console\ConsoleEvents;
 use Symfony\Component\Console\Event\ConsoleCommandEvent;
-use Symfony\Component\Debug\ErrorHandler;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 use Symfony\Component\Finder\Finder;
 
@@ -67,7 +63,7 @@ class ConsoleApplication
                         if ($classStmt instanceof Class_) {
                             require $file->getRealPath();
                             $className = (string) $stmt->name.'\\'.$classStmt->name;
-                            $app->add(new $className());
+                            $this->app->add(new $className());
                             break;
                         }
                     }
@@ -77,18 +73,7 @@ class ConsoleApplication
         }
         $this->addEvents($classLoader, $context);
 
-        $app->run();
-    }
-
-    private function registerService(ClassLoader $classLoader, ErrorHandler $errorHandler, ExceptionHandler $exceptionHandler): ContextInterface
-    {
-        $di = $this->createContainer($classLoader);
-        /* @var FpmContext $context */
-        $context = $di->get(ContextInterface::class);
-        $errorHandler->setDefaultLogger($di->get(LoggerInterface::class));
-        $exceptionHandler->setContext($context);
-
-        return $context;
+        $this->app->run();
     }
 
     /**

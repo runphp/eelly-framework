@@ -16,6 +16,9 @@ namespace Shadon\Application;
 use Composer\Autoload\ClassLoader;
 use DI;
 use Illuminate\Config\Repository;
+use Psr\Log\LoggerInterface;
+use Shadon\Context\ContextInterface;
+use Shadon\Context\FpmContext;
 use Shadon\Exception\ExceptionHandler;
 use Shadon\Exception\ServerException;
 use function Shadon\Helper\isCli;
@@ -59,6 +62,9 @@ trait RuntimeTrait
      */
     private function initEnvironment(string $rootPath): void
     {
+        if (\defined('APP')) {
+            return;
+        }
         if (!file_exists('.env')) {
             file_put_contents('.env', preg_replace(
                     '/^APP_KEY=/m',
@@ -105,5 +111,29 @@ trait RuntimeTrait
         $containerBuilder->addDefinitions($definitions);
 
         return $containerBuilder->build();
+    }
+
+    /**
+     * Register service.
+     *
+     * @param ClassLoader      $classLoader
+     * @param ErrorHandler     $errorHandler
+     * @param ExceptionHandler $exceptionHandler
+     *
+     * @throws DI\DependencyException
+     * @throws DI\NotFoundException
+     * @throws \Exception
+     *
+     * @return ContextInterface
+     */
+    private function registerService(ClassLoader $classLoader, ErrorHandler $errorHandler, ExceptionHandler $exceptionHandler): ContextInterface
+    {
+        $di = $this->createContainer($classLoader);
+        /* @var FpmContext $context */
+        $context = $di->get(ContextInterface::class);
+        $errorHandler->setDefaultLogger($di->get(LoggerInterface::class));
+        $exceptionHandler->setContext($context);
+
+        return $context;
     }
 }

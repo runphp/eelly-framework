@@ -16,11 +16,7 @@ namespace Shadon\Application;
 use Composer\Autoload\ClassLoader;
 use DI;
 use FastRoute;
-use Psr\Log\LoggerInterface;
 use Shadon\Context\ContextInterface;
-use Shadon\Context\FpmContext;
-use Shadon\Exception\ExceptionHandler;
-use Symfony\Component\Debug\ErrorHandler;
 use Symfony\Component\HttpFoundation\Request;
 
 /**
@@ -41,7 +37,9 @@ class FpmApplication
      */
     public function __invoke(string $rootPath, ClassLoader $classLoader): void
     {
-        $this->run($this->registerService($classLoader, ...$this->initRuntime($rootPath)));
+        $context = $this->registerService($classLoader, ...$this->initRuntime($rootPath));
+        ini_set('display_errors', '0');
+        $this->run($context);
     }
 
     /**
@@ -55,30 +53,5 @@ class FpmApplication
         $dispatcher = FastRoute\simpleDispatcher($context->routeDefinitionCallback());
         $routeInfo = $dispatcher->dispatch($request->getMethod(), $request->getPathInfo());
         $context->handle($routeInfo)->send();
-    }
-
-    /**
-     * Register service.
-     *
-     * @param ClassLoader      $classLoader
-     * @param ErrorHandler     $errorHandler
-     * @param ExceptionHandler $exceptionHandler
-     *
-     * @throws DI\DependencyException
-     * @throws DI\NotFoundException
-     * @throws \Exception
-     *
-     * @return ContextInterface
-     */
-    private function registerService(ClassLoader $classLoader, ErrorHandler $errorHandler, ExceptionHandler $exceptionHandler): ContextInterface
-    {
-        $di = $this->createContainer($classLoader);
-        /* @var FpmContext $context */
-        $context = $di->get(ContextInterface::class);
-        $errorHandler->setDefaultLogger($di->get(LoggerInterface::class));
-        ini_set('display_errors', '0');
-        $exceptionHandler->setContext($context);
-
-        return $context;
     }
 }
