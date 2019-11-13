@@ -34,8 +34,7 @@ use Symfony\Component\Finder\Finder;
  */
 class ConsoleApplication
 {
-    use RuntimeTrait;
-
+    use AppTrait;
     /**
      * @var Application
      */
@@ -49,7 +48,7 @@ class ConsoleApplication
      */
     public function __invoke(string $rootPath, ClassLoader $classLoader): void
     {
-        $context = $this->registerService($classLoader, ...$this->initRuntime($rootPath));
+        $context = self::createContext($rootPath, $classLoader);
 
         $this->app = new Application(APP['serverName'], APP['version']);
         $finder = new Finder();
