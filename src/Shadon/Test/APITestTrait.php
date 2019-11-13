@@ -14,8 +14,9 @@ declare(strict_types=1);
 namespace Shadon\Test;
 
 use Composer\Autoload\ClassLoader;
-use Shadon\Application\UnitTestApplication;
+use Shadon\Application\AppTrait;
 use Shadon\Context\ContextInterface;
+use function Shadon\Helper\createContext;
 
 /**
  * Trait APITestTrait.
@@ -24,6 +25,7 @@ use Shadon\Context\ContextInterface;
  */
 trait APITestTrait
 {
+    use AppTrait;
     /**
      * @var ContextInterface
      */
@@ -36,7 +38,9 @@ trait APITestTrait
         }
         $rootPath = realpath(\dirname(__DIR__, 6));
         $classLoader = require $rootPath.'/vendor/autoload.php';
-        self::$context = (new UnitTestApplication())->context($rootPath, $classLoader);
+
+        self::$context = self::createContext($rootPath, $classLoader);
+        // run
         preg_match('/.+\\\Module\\\(.+)\\\API\\\.+/', static::class, $matches);
         $module = lcfirst($matches[1]);
         self::$context->set('module', $module);

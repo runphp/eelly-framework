@@ -16,7 +16,7 @@ namespace Shadon\Application;
 use Composer\Autoload\ClassLoader;
 use DI;
 use FastRoute;
-use Shadon\Context\ContextInterface;
+use function Shadon\Helper\createContext;
 use Symfony\Component\HttpFoundation\Request;
 
 /**
@@ -26,7 +26,7 @@ use Symfony\Component\HttpFoundation\Request;
  */
 class FpmApplication
 {
-    use RuntimeTrait;
+    use AppTrait;
 
     /**
      * @param string      $rootPath
@@ -37,18 +37,8 @@ class FpmApplication
      */
     public function __invoke(string $rootPath, ClassLoader $classLoader): void
     {
-        $context = $this->registerService($classLoader, ...$this->initRuntime($rootPath));
-        ini_set('display_errors', '0');
-        $this->run($context);
-    }
-
-    /**
-     * Run your php app.
-     *
-     * @param ContextInterface $context
-     */
-    private function run(ContextInterface $context): void
-    {
+        $context = self::createContext($rootPath, $classLoader);
+        // run
         $request = $context->get(Request::class);
         $dispatcher = FastRoute\simpleDispatcher($context->routeDefinitionCallback());
         $routeInfo = $dispatcher->dispatch($request->getMethod(), $request->getPathInfo());
