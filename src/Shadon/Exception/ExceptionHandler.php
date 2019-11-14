@@ -19,6 +19,8 @@ use Shadon\Context\ContextInterface;
 use Shadon\Events\BeforeResponseEvent;
 use Symfony\Component\Debug\Exception\FlattenException;
 use Symfony\Component\Debug\ExceptionHandler as SymfonyExceptionHandler;
+use Zend\Diactoros\StreamFactory;
+use Zend\HttpHandlerRunner\Emitter\SapiEmitter;
 
 /**
  * Class ExceptionHandler.
@@ -58,9 +60,11 @@ class ExceptionHandler extends SymfonyExceptionHandler
             $response = $this->context->get(ResponseInterface::class);
             $this->context->set('return', $exception);
             $dispatcher->dispatch(new BeforeResponseEvent($this->context));
-            $response->setStatusCode($exception->getStatusCode());
-            $response->setData($this->context->get('return'));
-            $response->send();
+            $response = $response->withStatus($exception->getStatusCode())
+                ->withBody((new StreamFactory())->createStream(json_encode($this->context->get('return'))));
+
+            $emitter = new SapiEmitter();
+            $emitter->emit($response);
         } else {
             parent::sendPhpResponse($exception);
         }

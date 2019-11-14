@@ -45,7 +45,9 @@
 		"symfony/finder": "^4.3.5",
 		"vlucas/phpdotenv": "^3.6",
 		"zendframework/zend-diactoros": "^2.2",
-		"zendframework/zend-httphandlerrunner": "^1.1"
+		"zendframework/zend-httphandlerrunner": "^1.1",
+		"zendframework/zend-stratigility": "^3.2",
+		"zendframework/zend-expressive-swoole": "^2.4"
 	},
 	"autoload": {
 		"psr-4": {

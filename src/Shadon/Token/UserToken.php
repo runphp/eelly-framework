@@ -16,13 +16,13 @@ namespace Shadon\Token;
 use Defuse\Crypto\Crypto;
 use Defuse\Crypto\Exception\WrongKeyOrModifiedCiphertextException;
 use Defuse\Crypto\Key;
+use Psr\Http\Message\ServerRequestInterface;
 use Shadon\Exception\UnauthorizedException;
 use Shadon\Exception\UnsupportedException;
 use Shadon\Token\Data\DataInterface;
 use Shadon\Token\Data\Guest;
 use Shadon\Token\Data\User;
 use Shadon\Token\Storage\StorageInterface;
-use Symfony\Component\HttpFoundation\Request;
 
 /**
  * Class UserToken.
@@ -32,7 +32,7 @@ use Symfony\Component\HttpFoundation\Request;
 class UserToken implements TokenInterface
 {
     /**
-     * @var StorageInterface
+     * @var ServerRequestInterface
      */
     private $storage;
 
@@ -46,7 +46,7 @@ class UserToken implements TokenInterface
      */
     private $request;
 
-    public function __construct(StorageInterface $storage, Key $key, Request $request)
+    public function __construct(StorageInterface $storage, Key $key, ServerRequestInterface $request)
     {
         $this->storage = $storage;
         $this->key = $key;
@@ -71,8 +71,9 @@ class UserToken implements TokenInterface
     public function getToken(string $tokenId = null): DataInterface
     {
         if (null === $tokenId) {
-            if ($this->request->headers->has('Authorization')) {
-                $tokenId = $this->request->headers->get('Authorization');
+            $authHeader = $this->request->getHeader('Authorization');
+            if ($authHeader) {
+                $tokenId = current($authHeader);
             } else {
                 return $this->requesInfo();
             }
@@ -88,13 +89,52 @@ class UserToken implements TokenInterface
         return $data;
     }
 
+    /**
+     * @param array $server
+     * @param bool  $trustForwardedHeader
+     *
+     * @return mixed|null
+     */
+    private function getClientAddress(array $server, bool $trustForwardedHeader = true)
+    {
+        $address = null;
+        /*
+         * Proxies uses this IP
+         */
+        if ($trustForwardedHeader) {
+            if (isset($server['HTTP_X_FORWARDED_FOR'])) {
+                $address = $server['HTTP_X_FORWARDED_FOR'];
+            } elseif (isset($server['HTTP_CLIENT_IP'])) {
+                $address = $server['HTTP_CLIENT_IP'];
+            }
+        }
+        if (null === $address) {
+            $address = $server['REMOTE_ADDR'];
+        }
+
+        if (\is_string($address)) {
+            if (false !== strpos($address, ',')) {
+                $address = explode(',', $address)[0];
+            }
+        }
+
+        return $address;
+    }
+
     private function requesInfo(DataInterface $data = null): DataInterface
     {
         if (null === $data) {
             $data = new Guest();
         }
-        $data->ip = $this->request->getClientIp();
-        $data->userAgent = $this->request->headers->get('user-agent');
+
+        $ip = $this->getClientAddress($this->request->getServerParams());
+        if ($ip) {
+            $data->ip = $ip;
+        }
+        $userAgentHeader = $this->request->getHeader('user-agent');
+        if ($userAgentHeader) {
+            $data->userAgent = current($userAgentHeader);
+        }
 
         return $data;
     }
