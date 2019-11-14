@@ -16,10 +16,10 @@ namespace Shadon\Context;
 use Composer\Autoload\ClassLoader;
 use DI\Annotation\Inject;
 use Illuminate\Contracts\Events\Dispatcher;
+use Psr\Http\Message\ServerRequestInterface;
 use Shadon\Events\ModuleLoadEvent;
 use Shadon\Exception\NotFoundException;
 use Shadon\Exception\RequestException;
-use Symfony\Component\HttpFoundation\Request;
 
 /**
  * McaHandler.
@@ -101,11 +101,11 @@ class McaHandler
         $parameters = $reflectionMethod->getParameters();
         $paramNum = $reflectionMethod->getNumberOfParameters();
         if (0 < $paramNum) {
-            $request = $this->context->get(Request::class);
-            if (!'json' == $request->getContentType()) {
+            $request = $this->context->get(ServerRequestInterface::class);
+            if (!\in_array('application/json', $request->getHeader('content-type'))) {
                 throw new RequestException('bad request, `Content-Type` must `application/json`');
             }
-            $data = json_decode($request->getContent(), true);
+            $data = json_decode($request->getBody()->getContents(), true);
             if (JSON_ERROR_NONE !== json_last_error()) {
                 throw new RequestException('bad request, content must json');
             }

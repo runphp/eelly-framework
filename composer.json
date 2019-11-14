@@ -43,9 +43,8 @@
 		"symfony/debug": "^4.3",
 		"symfony/event-dispatcher": "^4.3",
 		"symfony/finder": "^4.3.5",
-		"symfony/http-foundation": "^4.3",
-		"symfony/http-kernel": "^4.3",
-		"vlucas/phpdotenv": "^3.6"
+		"vlucas/phpdotenv": "^3.6",
+		"zendframework/zend-diactoros": "^2.2"
 	},
 	"autoload": {
 		"psr-4": {

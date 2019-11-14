@@ -16,8 +16,8 @@ namespace Shadon\Application;
 use Composer\Autoload\ClassLoader;
 use DI;
 use FastRoute;
+use Psr\Http\Message\ServerRequestInterface;
 use function Shadon\Helper\createContext;
-use Symfony\Component\HttpFoundation\Request;
 
 /**
  * FpmApplication run in php fpm.
@@ -39,9 +39,9 @@ class FpmApplication
     {
         $context = self::createContext($rootPath, $classLoader);
         // run
-        $request = $context->get(Request::class);
+        $request = $context->get(ServerRequestInterface::class);
         $dispatcher = FastRoute\simpleDispatcher($context->routeDefinitionCallback());
-        $routeInfo = $dispatcher->dispatch($request->getMethod(), $request->getPathInfo());
+        $routeInfo = $dispatcher->dispatch($request->getMethod(), $request->getUri()->getPath());
         $context->handle($routeInfo)->send();
     }
 }
