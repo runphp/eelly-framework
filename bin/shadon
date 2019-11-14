@@ -1,0 +1,27 @@
+#!/usr/bin/env php
+<?php
+
+declare(strict_types=1);
+
+namespace Shadon\Command;
+
+// Setup/verify autoloading
+$depth = 1;
+while ($depth <= 4) {
+    $dir = sprintf('%s/%s', __DIR__, str_repeat('../', $depth));
+    if (is_dir($dir.'vendor')) {
+        $cwd = $dir;
+    }
+
+    $depth++;
+}
+
+if (!isset($cwd)) {
+    fwrite(STDERR, 'Cannot locate autoloader; please run "composer install"'.PHP_EOL);
+    exit(1);
+}
+
+$rootPath = $cwd;
+(function ($rootPath, $classLoader): void {
+    (new \Shadon\Application\ConsoleApplication())($rootPath, $classLoader);
+})($cwd, require $rootPath.'/vendor/autoload.php');

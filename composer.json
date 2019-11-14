@@ -57,6 +57,9 @@
 			"src/Shadon/Helper/functions_include.php"
 		]
 	},
+	"bin": [
+		"bin/shadon"
+	],
 	"config": {
 		"sort-packages": true
 	}
