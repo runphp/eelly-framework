@@ -23,6 +23,7 @@
 		"defuse/php-encryption": "^v2.2",
 		"doctrine/annotations": "^1.8",
 		"doctrine/cache": "^1.8",
+		"enqueue/amqp-lib": "^0.9",
 		"enqueue/enqueue": "^0.9",
 		"guzzlehttp/guzzle": "^6.2",
 		"illuminate/config": "^6.3",
