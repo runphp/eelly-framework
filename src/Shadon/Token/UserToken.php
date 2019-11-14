@@ -89,45 +89,13 @@ class UserToken implements TokenInterface
         return $data;
     }
 
-    /**
-     * @param array $server
-     * @param bool  $trustForwardedHeader
-     *
-     * @return mixed|null
-     */
-    private function getClientAddress(array $server, bool $trustForwardedHeader = true)
-    {
-        $address = null;
-        /*
-         * Proxies uses this IP
-         */
-        if ($trustForwardedHeader) {
-            if (isset($server['HTTP_X_FORWARDED_FOR'])) {
-                $address = $server['HTTP_X_FORWARDED_FOR'];
-            } elseif (isset($server['HTTP_CLIENT_IP'])) {
-                $address = $server['HTTP_CLIENT_IP'];
-            }
-        }
-        if (null === $address) {
-            $address = $server['REMOTE_ADDR'];
-        }
-
-        if (\is_string($address)) {
-            if (false !== strpos($address, ',')) {
-                $address = explode(',', $address)[0];
-            }
-        }
-
-        return $address;
-    }
-
     private function requesInfo(DataInterface $data = null): DataInterface
     {
         if (null === $data) {
             $data = new Guest();
         }
 
-        $ip = $this->getClientAddress($this->request->getServerParams());
+        $ip = $this->request->getClientAddress();
         if ($ip) {
             $data->ip = $ip;
         }
