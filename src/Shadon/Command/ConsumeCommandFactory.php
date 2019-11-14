@@ -13,6 +13,8 @@ declare(strict_types=1);
 
 namespace Shadon\Command;
 
+use Symfony\Component\Console\Command\Command;
+
 /**
  * Class ConsumeCommandFactory.
  *
@@ -20,7 +22,7 @@ namespace Shadon\Command;
  */
 class ConsumeCommandFactory
 {
-    public static function create($module): ConsumeCommand
+    public static function create($module): Command
     {
         return  new ConsumeCommand($module);
     }

@@ -19,6 +19,7 @@ use PhpParser\Node\Stmt\Namespace_;
 use PhpParser\ParserFactory;
 use Shadon\Command\ConsumeCommand;
 use Shadon\Command\ConsumeCommandFactory;
+use Shadon\Command\HttpServerCommandFactory;
 use Symfony\Component\Console\Application;
 use Symfony\Component\Console\CommandLoader\FactoryCommandLoader;
 use Symfony\Component\Console\ConsoleEvents;
@@ -54,7 +55,7 @@ class CommandLine extends Application
             }
         });
         $this->setDispatcher($eventDispatcher);
-        $factories = [];
+        $factories = HttpServerCommandFactory::createFactories($context);
         foreach ($context->get('config')->get('moduleList') as $module) {
             // add module consume command
             $factories[$module.':consume'] = function () use ($module) {
