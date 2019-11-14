@@ -18,6 +18,7 @@ use DI;
 use FastRoute;
 use Psr\Http\Message\ServerRequestInterface;
 use function Shadon\Helper\createContext;
+use Zend\HttpHandlerRunner\Emitter\SapiEmitter;
 
 /**
  * FpmApplication run in php fpm.
@@ -42,6 +43,8 @@ class FpmApplication
         $request = $context->get(ServerRequestInterface::class);
         $dispatcher = FastRoute\simpleDispatcher($context->routeDefinitionCallback());
         $routeInfo = $dispatcher->dispatch($request->getMethod(), $request->getUri()->getPath());
-        $context->handle($routeInfo)->send();
+        $response = $context->handle($routeInfo);
+        $emitter = new SapiEmitter();
+        $emitter->emit($response);
     }
 }

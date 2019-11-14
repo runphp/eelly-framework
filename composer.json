@@ -44,7 +44,8 @@
 		"symfony/event-dispatcher": "^4.3",
 		"symfony/finder": "^4.3.5",
 		"vlucas/phpdotenv": "^3.6",
-		"zendframework/zend-diactoros": "^2.2"
+		"zendframework/zend-diactoros": "^2.2",
+		"zendframework/zend-httphandlerrunner": "^1.1"
 	},
 	"autoload": {
 		"psr-4": {

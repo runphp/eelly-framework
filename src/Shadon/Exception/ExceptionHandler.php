@@ -14,11 +14,11 @@ declare(strict_types=1);
 namespace Shadon\Exception;
 
 use Illuminate\Contracts\Events\Dispatcher;
+use Psr\Http\Message\ResponseInterface;
 use Shadon\Context\ContextInterface;
 use Shadon\Events\BeforeResponseEvent;
 use Symfony\Component\Debug\Exception\FlattenException;
 use Symfony\Component\Debug\ExceptionHandler as SymfonyExceptionHandler;
-use Symfony\Component\HttpFoundation\Response;
 
 /**
  * Class ExceptionHandler.
@@ -55,7 +55,7 @@ class ExceptionHandler extends SymfonyExceptionHandler
                 $exception = \Shadon\Exception\FlattenException::create($exception);
             }
             $dispatcher = $this->context->get(Dispatcher::class);
-            $response = $this->context->get(Response::class);
+            $response = $this->context->get(ResponseInterface::class);
             $this->context->set('return', $exception);
             $dispatcher->dispatch(new BeforeResponseEvent($this->context));
             $response->setStatusCode($exception->getStatusCode());

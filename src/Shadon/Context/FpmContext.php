@@ -15,11 +15,12 @@ namespace Shadon\Context;
 
 use FastRoute;
 use Illuminate\Contracts\Events\Dispatcher;
+use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\ServerRequestInterface;
 use Shadon\Events\BeforeResponseEvent;
 use Shadon\Exception\MethodNotAllowedException;
 use Shadon\Exception\NotFoundException;
-use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\HttpFoundation\Response;
+use Zend\Diactoros\StreamFactory;
 
 /**
  * Class FpmContext.
@@ -53,27 +54,27 @@ class FpmContext implements ContextInterface
         };
     }
 
-    public function handle(array $routeInfo): Response
+    public function handle(array $routeInfo): ResponseInterface
     {
         if (FastRoute\Dispatcher::FOUND == $routeInfo[0]) {
             $this->set('return', $routeInfo[1](...array_values($routeInfo[2])));
         } elseif (FastRoute\Dispatcher::NOT_FOUND == $routeInfo[0]) {
             throw new NotFoundException(
-                sprintf('api `%s` not found', $this->get(Request::class)->getPathInfo())
+                sprintf('api `%s` not found', $this->get(ServerRequestInterface::class)->getUri()->getPath())
             );
         } elseif (FastRoute\Dispatcher::METHOD_NOT_ALLOWED == $routeInfo[0]) {
-            $request = $this->get(Request::class);
+            $request = $this->get(ServerRequestInterface::class);
             throw new MethodNotAllowedException(
-                sprintf('api `%s` method `%s` not allowed', $request->getPathInfo(), $request->getMethod())
+                sprintf('api `%s` method `%s` not allowed', $request->getUri()->getPath(), $request->getMethod())
             );
         }
         // ready for response
         /* @var Dispatcher $dispatcher */
         $dispatcher = $this->get(Dispatcher::class);
-        $response = $this->get(Response::class);
+        /* @var \Zend\Diactoros\Response\JsonResponse $response*/
+        $response = $this->get(ResponseInterface::class);
         $dispatcher->dispatch(new BeforeResponseEvent($this));
-        $response->setData($this->get('return'));
 
-        return $response;
+        return $response->withBody((new StreamFactory())->createStream(json_encode($this->get('return'))));
     }
 }
