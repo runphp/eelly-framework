@@ -17,6 +17,7 @@ use Composer\Autoload\ClassLoader;
 use PhpParser\Node\Stmt\Class_;
 use PhpParser\Node\Stmt\Namespace_;
 use PhpParser\ParserFactory;
+use Shadon\Command\HttpServerCommand;
 use Shadon\Context\ContextInterface;
 use Symfony\Component\Console\Application;
 use Symfony\Component\Console\Command\Command;
@@ -51,6 +52,7 @@ class ConsoleApplication
         $context = self::createContext($rootPath, $classLoader);
 
         $this->app = new Application(APP['serverName'], APP['version']);
+        $this->app->add(new HttpServerCommand());
         $finder = new Finder();
         $parser = (new ParserFactory())->create(ParserFactory::ONLY_PHP7);
         foreach ($finder->in('src/Module/*/Command')->name('*Command.php') as $file) {
