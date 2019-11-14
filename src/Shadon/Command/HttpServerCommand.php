@@ -16,6 +16,7 @@ namespace Shadon\Command;
 use Interop\Queue\Context as QueueContext;
 use Shadon\Context\ContextInterface;
 use Symfony\Component\Console\Command\Command;
+use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 
@@ -46,7 +47,8 @@ class HttpServerCommand extends Command
     {
         $this
             ->setDescription('http server')
-            ->setHelp('http server');
+            ->setHelp('http server start');
+        $this->addArgument('cmd', InputArgument::REQUIRED, 'http服务器命令[start|stop|reload|status]');
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): void

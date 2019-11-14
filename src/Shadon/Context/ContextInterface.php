@@ -13,22 +13,20 @@ declare(strict_types=1);
 
 namespace Shadon\Context;
 
+use Psr\Container\ContainerInterface;
+
 /**
  * Interface ContextInterface.
  *
  * @author hehui<runphp@qq.com>
  */
-interface ContextInterface
+interface ContextInterface extends ContainerInterface
 {
     public function push(callable $handler);
 
     public function next();
 
-    public function get($name);
-
     public function set(string $name, $value): void;
-
-    public function has(string $name): bool;
 
     public function injectOn($instance);
 

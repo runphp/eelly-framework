@@ -14,12 +14,14 @@ declare(strict_types=1);
 namespace Shadon\Exception;
 
 use Illuminate\Contracts\Events\Dispatcher;
-use Psr\Http\Message\ResponseInterface;
+use NunoMaduro\Collision\Adapters\Laravel\Inspector;
+use NunoMaduro\Collision\Handler;
 use Shadon\Context\ContextInterface;
 use Shadon\Events\BeforeResponseEvent;
+use function Shadon\Helper\isCli;
 use Symfony\Component\Debug\Exception\FlattenException;
 use Symfony\Component\Debug\ExceptionHandler as SymfonyExceptionHandler;
-use Zend\Diactoros\StreamFactory;
+use Zend\Diactoros\Response\JsonResponse;
 use Zend\HttpHandlerRunner\Emitter\SapiEmitter;
 
 /**
@@ -52,19 +54,23 @@ class ExceptionHandler extends SymfonyExceptionHandler
 
     public function sendPhpResponse($exception): void
     {
+        if (!$exception instanceof FlattenException) {
+            $exception = \Shadon\Exception\FlattenException::create($exception);
+        }
         if (\is_object($this->context)) {
-            if (!$exception instanceof FlattenException) {
-                $exception = \Shadon\Exception\FlattenException::create($exception);
-            }
             $dispatcher = $this->context->get(Dispatcher::class);
-            $response = $this->context->get(ResponseInterface::class);
             $this->context->set('return', $exception);
             $dispatcher->dispatch(new BeforeResponseEvent($this->context));
-            $response = $response->withStatus($exception->getStatusCode())
-                ->withBody((new StreamFactory())->createStream(json_encode($this->context->get('return'))));
-
-            $emitter = new SapiEmitter();
-            $emitter->emit($response);
+            if (isCli()) {
+                // TODO when cli server
+                $handler = new Handler();
+                $handler->setInspector(new Inspector($exception));
+                $handler->handle();
+            } else {
+                $response = new JsonResponse($this->context->get('return'), $exception->getStatusCode());
+                $emitter = new SapiEmitter();
+                $emitter->emit($response);
+            }
         } else {
             parent::sendPhpResponse($exception);
         }

@@ -23,5 +23,5 @@ if (!isset($cwd)) {
 
 $rootPath = $cwd;
 (function ($rootPath, $classLoader): void {
-    (new \Shadon\Application\ConsoleApplication())($rootPath, $classLoader);
+    (new \Shadon\Application\CommandLine($rootPath, $classLoader))->run();
 })($cwd, require $rootPath.'/vendor/autoload.php');
