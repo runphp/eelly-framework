@@ -102,9 +102,6 @@ class McaHandler
         $paramNum = $reflectionMethod->getNumberOfParameters();
         if (0 < $paramNum) {
             $request = $this->context->get(ServerRequestInterface::class);
-            if (!\in_array('application/json', $request->getHeader('content-type'))) {
-                throw new RequestException('bad request, `Content-Type` must `application/json`');
-            }
             $data = json_decode($request->getBody()->getContents(), true);
             if (JSON_ERROR_NONE !== json_last_error()) {
                 throw new RequestException('bad request, content must json');
