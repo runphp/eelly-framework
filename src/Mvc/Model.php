@@ -21,6 +21,8 @@ use Phalcon\Paginator\Factory;
 
 /**
  * Class Model.
+ *
+ * @method static static findFirst($parameters = null)
  */
 abstract class Model extends MvcModel
 {
