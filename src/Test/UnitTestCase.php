@@ -28,6 +28,11 @@ class UnitTestCase extends TestCase implements InjectionAwareInterface
      */
     protected $di;
 
+    /**
+     * @var mixed
+     */
+    protected $testObject;
+
     public static function setUpBeforeClass(): void
     {
         $di = Di::getDefault();
@@ -39,6 +44,12 @@ class UnitTestCase extends TestCase implements InjectionAwareInterface
         $module = $di->getShared('\\'.$moduleName.'\\Module');
         $module->registerAutoloaders($di);
         $module->registerServices($di);
+    }
+
+    protected function setUp(): void
+    {
+        $clazz = substr(static::class, 0, -4);
+        $this->testObject = $this->getDI()->get($clazz);
     }
 
     /**
