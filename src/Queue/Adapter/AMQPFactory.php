@@ -135,7 +135,6 @@ class AMQPFactory extends Injectable implements QueueFactoryInterface
         if (!isset($this->consumers[$name])) {
             /* @var \Thumper\ConnectionRegistry $connectionRegistry */
             $connectionRegistry = $this->getDI()->get(ConnectionRegistry::class);
-
             $connection = $connectionRegistry->getConnection($name);
             $this->consumers[$name] = new Consumer($connection);
         }

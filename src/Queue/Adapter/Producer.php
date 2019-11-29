@@ -55,12 +55,5 @@ class Producer extends \Thumper\Producer
             'time'    => microtime(true),
         ];
         parent::publish(\GuzzleHttp\json_encode($messageBody), $routingKey);
-        $connection = $this->channel->getConnection();
-        if ($connection->isConnected()) {
-            try {
-                $connection->close();
-            } catch (\PhpAmqpLib\Exception\AMQPRuntimeException $e) {
-            }
-        }
     }
 }
