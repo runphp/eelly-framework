@@ -141,7 +141,8 @@ class QueueConsumerCommand extends SymfonyCommand implements InjectionAwareInter
         $this->addOption('--routingKey', null, InputOption::VALUE_OPTIONAL, '路由key', 'default_routing_key');
         $this->addOption('--queue', null, InputOption::VALUE_OPTIONAL, '队列名', 'default_queue');
         $this->addOption('--count', null, InputOption::VALUE_OPTIONAL, '消费者数量', 5);
-        $this->addOption('daemonize', '-d', InputOption::VALUE_NONE, '是否守护进程化');
+        $this->addOption('--daemonize', '-d', InputOption::VALUE_NONE, '是否守护进程化');
+        $this->addOption('--stop', null, InputOption::VALUE_NONE, '结束');
     }
 
     /**
@@ -159,11 +160,22 @@ class QueueConsumerCommand extends SymfonyCommand implements InjectionAwareInter
         $this->exchange = $this->input->getArgument('exchange');
         $this->routingKey = $this->input->getOption('routingKey');
         $this->queue = $this->input->getOption('queue');
-        if ($input->hasParameterOption(['--daemonize', '-d'], true)) {
-            \swoole_process::daemon();
-        }
         $masterProcessName = sprintf('%s.%s.%s', $this->exchange, $this->routingKey, $this->queue);
         $masterPidFile = 'var/pid/'.$masterProcessName.'.pid.php';
+        if (file_exists($masterPidFile)) {
+            $pid = require $masterPidFile;
+            if (Swoole\Process::kill($pid, 0)) {
+                Swoole\Process::kill($pid);
+            }
+            if ($input->hasParameterOption(['--stop'], true)) {
+                echo "exit\n";
+
+                return;
+            }
+        }
+        if ($input->hasParameterOption(['--daemonize', '-d'], true)) {
+            Swoole\Process::daemon();
+        }
         file_put_contents($masterPidFile, '<?php return '.getmypid().';');
         swoole_set_process_name($masterProcessName.'#-1');
         $count = (int) $this->input->getOption('count');
