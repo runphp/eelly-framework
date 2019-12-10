@@ -82,7 +82,7 @@ class Mysql extends PdoMysql
         return $this->_pdo;
     }
 
-    private function isGoneAwayException(\Exception $exception)
+    public function isGoneAwayException(\Exception $exception)
     {
         return false !== stripos($exception->getMessage(), self::MYSQL_GONE_AWAY_EXCEPTION);
     }

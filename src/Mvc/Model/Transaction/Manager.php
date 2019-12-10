@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace Shadon\Mvc\Model\Transaction;
 
 use Phalcon\Mvc\Model\Transaction\Manager as TransactionManager;
+use Phalcon\Mvc\Model\TransactionInterface;
 
 /**
  * @author hehui<hehui@eelly.net>
@@ -21,4 +22,23 @@ use Phalcon\Mvc\Model\Transaction\Manager as TransactionManager;
 class Manager extends TransactionManager
 {
     protected $_service = 'dbMaster';
+
+    public function get($autoBegin = true): TransactionInterface
+    {
+        try {
+            $tx = parent::get($autoBegin);
+        } catch (\Exception $e) {
+            /* @var \Shadon\Db\Adapter\Pdo\Mysql $pdo */
+            $pdo = $this->getDI()->getShared($this->_service);
+            if ($pdo->isGoneAwayException($e) || null === $pdo->getInternalHandler()) {
+                $pdo->reconnect();
+
+                return parent::get($autoBegin);
+            } else {
+                throw $e;
+            }
+        }
+
+        return $tx;
+    }
 }

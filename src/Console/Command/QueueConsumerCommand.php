@@ -20,7 +20,7 @@ use Shadon\Di\InjectionAwareInterface;
 use Shadon\Di\Traits\InjectableTrait;
 use Shadon\Queue\Adapter\Consumer;
 use Shadon\Utils\DateTime;
-use Swoole\Atomic;
+use Swoole;
 use Symfony\Component\Console\Command\Command as SymfonyCommand;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
@@ -73,7 +73,7 @@ class QueueConsumerCommand extends SymfonyCommand implements InjectionAwareInter
     private $output;
 
     /**
-     * @var Atomic
+     * @var Swoole\Atomic
      */
     private $atomic;
 
@@ -94,6 +94,13 @@ class QueueConsumerCommand extends SymfonyCommand implements InjectionAwareInter
 
     public function onWorkerStart(\Swoole\Process\Pool $pool, int $workerId): void
     {
+        // 清除apc或op缓存
+        if (\function_exists('apc_clear_cache')) {
+            apc_clear_cache();
+        }
+        if (\function_exists('opcache_reset')) {
+            opcache_reset();
+        }
         $processName = sprintf('%s.%s.%s#%d', $this->exchange, $this->routingKey, $this->queue, $workerId);
         swoole_set_process_name($processName);
         $this->output->writeln($processName);
@@ -148,14 +155,17 @@ class QueueConsumerCommand extends SymfonyCommand implements InjectionAwareInter
         // define('AMQP_DEBUG', true);
         $this->input = $input;
         $this->output = $output;
-        $this->atomic = new Atomic();
+        $this->atomic = new Swoole\Atomic();
         $this->exchange = $this->input->getArgument('exchange');
         $this->routingKey = $this->input->getOption('routingKey');
         $this->queue = $this->input->getOption('queue');
         if ($input->hasParameterOption(['--daemonize', '-d'], true)) {
             \swoole_process::daemon();
         }
-        swoole_set_process_name(sprintf('%s.%s.%s#%d', $this->exchange, $this->routingKey, $this->queue, -1));
+        $masterProcessName = sprintf('%s.%s.%s', $this->exchange, $this->routingKey, $this->queue);
+        $masterPidFile = 'var/pid/'.$masterProcessName.'.pid.php';
+        file_put_contents($masterPidFile, '<?php return '.getmypid().';');
+        swoole_set_process_name($masterProcessName.'#-1');
         $count = (int) $this->input->getOption('count');
         $pool = new \Swoole\Process\Pool($count);
         $pool->on('workerStart', [$this, 'onWorkerStart']);
