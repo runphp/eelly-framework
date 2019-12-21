@@ -181,6 +181,7 @@ class ServiceDispatcher extends Dispatcher
                     $status = $this->getEventsManager()->fire('dispatcher:setDefaultParamValue', $routeParamsObject, $parameter);
                     if (false === $status) {
                         $routeParams = $routeParamsObject->getArrayCopy();
+                        unset($routeParams[$parameter->name]);
                     } else {
                         $routeParams[$position] = $parameter->getDefaultValue();
                     }

@@ -38,7 +38,7 @@ abstract class Model extends MvcModel
     /**
      * @param null $parameters
      *
-     * @return ResultsetInterface
+     * @return static[] | ResultsetInterface
      */
     public static function find($parameters = null): ResultsetInterface
     {
